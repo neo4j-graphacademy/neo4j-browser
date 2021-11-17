@@ -57,7 +57,7 @@ import { getUuid, updateUdcData } from 'shared/modules/udc/udcDuck'
 import epics from 'shared/rootEpic'
 import reducers from 'shared/rootReducer'
 import { getTelemetrySettings } from 'shared/utils/selectors'
-import { URL } from 'whatwg-url'
+import { executeCommand } from 'shared/modules/commands/commandsDuck'
 
 // Configure localstorage sync
 applyKeys(
@@ -154,15 +154,17 @@ function scrubQueryParamsAndUrl(event: Sentry.Event): Sentry.Event {
 export function setupSentry(): void {
   if (process.env.NODE_ENV === 'production') {
     Sentry.init({
-      dsn: 'https://1ea9f7ebd51441cc95906afb2d31d841@o110884.ingest.sentry.io/1232865',
+      dsn:
+        'https://1ea9f7ebd51441cc95906afb2d31d841@o110884.ingest.sentry.io/1232865',
       release: `neo4j-browser@${version}`,
       integrations: [
         new Integrations.BrowserTracing(),
         new CaptureConsole({ levels: ['error'] })
       ],
       tracesSampler: context => {
-        const isPerformanceTransaction =
-          context.transactionContext.name.startsWith('performance')
+        const isPerformanceTransaction = context.transactionContext.name.startsWith(
+          'performance'
+        )
         if (isPerformanceTransaction) {
           // 1% of performance reports is enough to build stats, raise if needed
           return 0.01
@@ -282,6 +284,13 @@ const uploadLink = createUploadLink({
 const client = new ApolloClient({
   cache: apolloCache,
   link: uploadLink
+})
+
+// @GraphAcademy - queries using postMessage
+window.addEventListener('message', (event: MessageEvent) => {
+  if (event.data.cmd === 'edit') {
+    store.dispatch(executeCommand(event.data.arg))
+  }
 })
 
 const AppInit = (): JSX.Element => {

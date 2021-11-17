@@ -258,12 +258,13 @@ export function App(props: any) {
               )}
               <StyledApp>
                 <StyledBody>
-                  <ErrorBoundary>
+                  {/* @GraphAcademy - remove sidebar */}
+                  {/* <ErrorBoundary>
                     <Sidebar
                       selectedDrawerName={drawer}
                       onNavClick={handleNavClick}
                     />
-                  </ErrorBoundary>
+                  </ErrorBoundary> */}
                   <StyledMainWrapper id={MAIN_WRAPPER_DOM_ID}>
                     <Main
                       connectionState={connectionState}

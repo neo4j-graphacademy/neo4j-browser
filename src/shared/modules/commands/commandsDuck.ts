@@ -314,7 +314,12 @@ export const postConnectCmdEpic = (some$: any, store: any) =>
       .ofType(UPDATE_SETTINGS)
       .map(() => {
         const serverSettings = getAvailableSettings(store.getState())
-        if (serverSettings && serverSettings['browser.post_connect_cmd']) {
+        // @GraphAcademy - disable post connect cmd
+        if (
+          false &&
+          serverSettings &&
+          serverSettings['browser.post_connect_cmd']
+        ) {
           const cmds = extractPostConnectCommandsFromServerConfig(
             serverSettings['browser.post_connect_cmd']
           )
