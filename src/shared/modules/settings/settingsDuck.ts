@@ -94,8 +94,11 @@ export const getAllowUserStats = (state: GlobalState): boolean =>
 export const initialState = {
   maxHistory: 30,
   theme: AUTO_THEME,
-  initCmd: ':play start',
-  playImplicitInitCommands: true,
+  // @GraphAcademy - disable :play start on load
+  // initCmd: ':play start',
+  // playImplicitInitCommands: true,
+  initCmd: undefined,
+  playImplicitInitCommands: false,
   initialNodeDisplay: 300,
   maxNeighbours: 100,
   showSampleScripts: true,

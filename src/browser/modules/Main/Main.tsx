@@ -83,7 +83,8 @@ const Main = React.memo(function Main(props: any) {
           {props.errorMessage}
         </ErrorBanner>
       )}
-      {props.connectionState === DISCONNECTED_STATE && (
+      {/* @GraphAcademy - Remove disconnected state */}
+      {/* {props.connectionState === DISCONNECTED_STATE && (
         <NotAuthedBanner data-testid="disconnectedBanner">
           Database access not available. Please use&nbsp;
           <AutoExecButton
@@ -92,7 +93,7 @@ const Main = React.memo(function Main(props: any) {
           />
           &nbsp; to establish connection. There's a graph waiting for you.
         </NotAuthedBanner>
-      )}
+      )} */}
       {props.connectionState === PENDING_STATE && !past10Sec && (
         <WarningBanner data-testid="reconnectBanner">
           Connection to server lost. Reconnecting...

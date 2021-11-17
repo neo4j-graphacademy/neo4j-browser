@@ -58,6 +58,7 @@ import {
   wasRedirectedBackFromSSOServer
 } from 'neo4j-client-sso'
 import { getTelemetrySettings } from 'shared/utils/selectors'
+import { executeCommand } from 'shared/modules/commands/commandsDuck'
 
 // Configure localstorage sync
 applyKeys(
@@ -274,6 +275,13 @@ const uploadLink = createUploadLink({
 const client = new ApolloClient({
   cache: apolloCache,
   link: uploadLink
+})
+
+// @GraphAcademy - queries using postMessage
+window.addEventListener('message', (event: MessageEvent) => {
+  if (event.data.cmd === 'edit') {
+    store.dispatch(executeCommand(event.data.arg))
+  }
 })
 
 const AppInit = (): JSX.Element => {
