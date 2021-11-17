@@ -68,7 +68,9 @@ export default function (state = initialState, action: any) {
       return {
         ...initialState,
         ...state,
-        browserSync: shouldUtilizeBrowserSync(action)
+        // @GraphAcademy - ignore browser sync
+        // browserSync: shouldUtilizeBrowserSync(action)
+        browserSync: false
       }
     case UPDATE_ALL_FEATURES:
       return { ...state, availableProcedures: [...action.availableProcedures] }

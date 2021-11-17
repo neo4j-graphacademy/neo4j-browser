@@ -587,7 +587,8 @@ export const startupConnectionSuccessEpic = (action$: any, store: any) => {
   return action$
     .ofType(STARTUP_CONNECTION_SUCCESS)
     .do(() => {
-      if (getPlayImplicitInitCommands(store.getState())) {
+      // @GraphAcademy - Disable server status
+      if (false && getPlayImplicitInitCommands(store.getState())) {
         store.dispatch(executeSystemCommand(`:server status`))
         store.dispatch(executeSystemCommand(getInitCmd(store.getState())))
       }

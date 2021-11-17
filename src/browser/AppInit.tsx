@@ -57,7 +57,7 @@ import { getUuid, updateUdcData } from 'shared/modules/udc/udcDuck'
 import epics from 'shared/rootEpic'
 import reducers from 'shared/rootReducer'
 import { getTelemetrySettings } from 'shared/utils/selectors'
-import { URL } from 'whatwg-url'
+import { executeCommand } from 'shared/modules/commands/commandsDuck'
 
 // Configure localstorage sync
 applyKeys(
@@ -282,6 +282,13 @@ const uploadLink = createUploadLink({
 const client = new ApolloClient({
   cache: apolloCache,
   link: uploadLink
+})
+
+// @GraphAcademy - queries using postMessage
+window.addEventListener('message', (event: MessageEvent) => {
+  if (event.data.cmd === 'edit') {
+    store.dispatch(executeCommand(event.data.arg))
+  }
 })
 
 const AppInit = (): JSX.Element => {
