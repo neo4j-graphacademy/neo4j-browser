@@ -19,11 +19,12 @@
  */
 
 import * as Sentry from '@sentry/react'
+import { v4 } from 'uuid'
+import { Dispatch, Action } from 'redux'
 import bolt from 'services/bolt/bolt'
 import * as frames from 'shared/modules/frames/framesDuck'
 import { getHostedUrl } from 'shared/modules/app/appDuck'
 import { getHistory, clearHistory } from 'shared/modules/history/historyDuck'
-import { v4 } from 'uuid'
 import {
   update as updateQueryResult,
   REQUEST_STATUS_SUCCESS,
@@ -37,35 +38,33 @@ import {
   getUseDb
 } from 'shared/modules/connections/connectionsDuck'
 import { open } from 'shared/modules/sidebar/sidebarDuck'
-import {
-  addGuideIfExternal,
-  resetGuide,
-  setCurrentGuide
-} from 'shared/modules/guides/guidesDuck'
+import { fetchRemoteGuide, resetGuide } from 'shared/modules/guides/guidesDuck'
 import { getParams } from 'shared/modules/params/paramsDuck'
 import { getUserCapabilities } from 'shared/modules/features/featuresDuck'
 import {
   updateGraphStyleData,
   getGraphStyleData
 } from 'shared/modules/grass/grassDuck'
+import { SYSTEM_DB } from 'shared/modules/dbMeta/constants'
 import {
   getRemoteContentHostnameAllowlist,
   getDatabases,
-  fetchMetaData,
   getAvailableSettings,
-  SYSTEM_DB
-} from 'shared/modules/dbMeta/dbMetaDuck'
+  findDatabaseByNameOrAlias
+} from 'shared/modules/dbMeta/state'
+import { fetchMetaData } from 'shared/modules/dbMeta/actions'
 import { canSendTxMetadata } from 'shared/modules/features/versionedFeatures'
-import { fetchRemoteGuide } from 'shared/modules/commands/helpers/play'
+import { fetchRemoteGuideAsync } from 'shared/modules/commands/helpers/playAndGuides'
 import remote from 'services/remote'
 import { isLocalRequest, authHeaderFromCredentials } from 'services/remoteUtils'
 import { handleServerCommand } from 'shared/modules/commands/helpers/server'
 import { handleCypherCommand } from 'shared/modules/commands/helpers/cypher'
 import {
+  SINGLE_COMMAND_QUEUED,
+  ExecuteSingleCommandAction,
   showErrorMessage,
   successfulCypher,
   unsuccessfulCypher,
-  SINGLE_COMMAND_QUEUED,
   listDbsCommand,
   useDbCommand,
   autoCommitTxCommand
@@ -81,7 +80,7 @@ import {
 import {
   UnknownCommandError,
   CouldNotFetchRemoteGuideError,
-  FetchURLError,
+  FetchUrlError,
   InvalidGrassError,
   UnsupportedError,
   DatabaseUnavailableError,
@@ -89,7 +88,7 @@ import {
 } from 'services/exceptions'
 import {
   parseHttpVerbCommand,
-  isValidURL
+  isValidUrl
 } from 'shared/modules/commands/helpers/http'
 import { fetchRemoteGrass } from 'shared/modules/commands/helpers/grass'
 import { parseGrass, objToCss } from 'shared/services/grassUtils'
@@ -101,13 +100,10 @@ import {
   getUserDirectTxMetadata,
   getBackgroundTxMetadata
 } from 'shared/services/bolt/txMetadata'
-import {
-  getCommandAndParam,
-  tryGetRemoteInitialSlideFromUrl
-} from './commandUtils'
+import { getCommandAndParam } from './commandUtils'
 import { unescapeCypherIdentifier } from './utils'
 import { getLatestFromFrameStack } from 'browser/modules/Stream/stream.utils'
-import { resolveGuide } from './guideResolverHelper'
+import { tryGetRemoteInitialSlideFromUrl } from './guideResolverHelper'
 import { AUTH_STORAGE_LOGS } from 'neo4j-client-sso'
 
 const PLAY_FRAME_TYPES = ['play', 'play-remote']
@@ -221,24 +217,20 @@ const availableCommands = [
 
         const normalizedName = dbName.toLowerCase()
         const cleanDbName = unescapeCypherIdentifier(normalizedName)
+        const dbMeta = findDatabaseByNameOrAlias(store.getState(), cleanDbName)
 
-        const dbMeta = getDatabases(store.getState()).find(
-          (db: any) => db.name.toLowerCase() === cleanDbName
-        )
-
-        // Do we have a db with that name?
         if (!dbMeta) {
           throw DatabaseNotFoundError({ dbName })
         }
         if (dbMeta.status !== 'online') {
-          throw DatabaseUnavailableError({ dbName, dbMeta })
+          throw DatabaseUnavailableError({ dbName: dbMeta.name, dbMeta })
         }
-        put(useDb(cleanDbName))
+        put(useDb(dbMeta.name))
         put(
           frames.add({
             ...action,
             type: 'use-db',
-            useDb: cleanDbName
+            useDb: dbMeta.name
           })
         )
         if (action.requestId) {
@@ -505,32 +497,16 @@ const availableCommands = [
   },
   {
     name: 'guide',
-    match: (cmd: any) => /^guide(\s|$)/.test(cmd),
-    exec(action: any, put: any, store: any) {
-      const guideName = action.cmd.substr(':guide'.length).trim()
-      if (!guideName) {
-        put(resetGuide())
-        put(open('guides'))
+    match: (cmd: string) => /^guide(\s|$)/.test(cmd),
+    exec(action: ExecuteSingleCommandAction, dispatch: Dispatch<Action>) {
+      const guideIdentifier = action.cmd.substr(':guide'.length).trim()
+      if (!guideIdentifier) {
+        dispatch(resetGuide())
+        dispatch(open('guides'))
         return
       }
 
-      const initialSlide = tryGetRemoteInitialSlideFromUrl(action.cmd)
-      resolveGuide(guideName, store.getState()).then(
-        ({ slides, title, isError }) => {
-          const guide = {
-            currentSlide: initialSlide,
-            title,
-            slides,
-            isError
-          }
-          put(setCurrentGuide(guide))
-          if (!guide.isError) {
-            put(addGuideIfExternal(guide))
-          }
-
-          put(open('guides'))
-        }
-      )
+      dispatch(fetchRemoteGuide(guideIdentifier))
     }
   },
   {
@@ -563,7 +539,7 @@ const availableCommands = [
         ? urlObject.pathname.split('.').pop()
         : 'html'
       const allowlist = getRemoteContentHostnameAllowlist(store.getState())
-      fetchRemoteGuide(url, allowlist)
+      fetchRemoteGuideAsync(url, allowlist)
         .then(r => {
           put(
             frames.add({
@@ -754,7 +730,7 @@ const availableCommands = [
             }
           )
           const url =
-            !isValidURL(r.url) && connectionData.restApi
+            !isValidUrl(r.url) && connectionData.restApi
               ? `${connectionData.restApi}${r.url}`
               : r.url
           let authHeaders = {}
@@ -782,7 +758,7 @@ const availableCommands = [
               )
             })
             .catch(e => {
-              const error = FetchURLError({ error: e.message })
+              const error = FetchUrlError({ error: e.message })
               put(
                 frames.add({
                   useDb: getUseDb(store.getState()),
@@ -853,7 +829,7 @@ const availableCommands = [
       }
 
       if (
-        isValidURL(param) &&
+        isValidUrl(param) &&
         param.includes('.') /* isValid url considers words like rest an url*/
       ) {
         const url = param.startsWith('http') ? param : `http://${param}`

@@ -39,20 +39,34 @@ import ErrorBoundary from 'browser-components/ErrorBoundary'
 import { useSlowConnectionState } from './main.hooks'
 import AutoExecButton from '../Stream/auto-exec-button'
 
-const Main = React.memo(function Main(props: any) {
+type MainProps = {
+  connectionState: number
+  isDatabaseUnavailable: boolean
+  errorMessage?: string
+  lastConnectionUpdate: number
+  showUdcConsentBanner: boolean
+  useDb: string | null
+  dismissConsentBanner: () => void
+  incrementConsentBannerShownCount: () => void
+  openSettingsDrawer: () => void
+}
+
+const Main = React.memo(function Main(props: MainProps) {
   const [past5Sec, past10Sec] = useSlowConnectionState(props)
   const {
-    databases,
-    useDb,
+    connectionState,
+    isDatabaseUnavailable,
+    errorMessage,
     showUdcConsentBanner,
+    useDb,
+    dismissConsentBanner,
     incrementConsentBannerShownCount,
     openSettingsDrawer
   } = props
-  const dbMeta = databases && databases.find((db: any) => db.name === useDb)
-  const dbIsUnavailable = useDb && (!dbMeta || dbMeta.status !== 'online')
+
   useEffect(() => {
     showUdcConsentBanner && incrementConsentBannerShownCount()
-  }, [showUdcConsentBanner])
+  }, [showUdcConsentBanner, incrementConsentBannerShownCount])
 
   return (
     <StyledMain data-testid="main">
@@ -70,19 +84,17 @@ const Main = React.memo(function Main(props: any) {
             </UnderlineClickable>{' '}
             at any time.
           </span>
-          <DismissConsentBanner onClick={props.dismissConsentBanner} />
+          <DismissConsentBanner onClick={dismissConsentBanner} />
         </UdcConsentBanner>
       )}
-      {dbIsUnavailable && (
+      {useDb && isDatabaseUnavailable && (
         <ErrorBanner>
-          Database '{useDb}' is unavailable. Run{' '}
+          {`Database '${useDb}' is unavailable. Run `}
           <AutoExecButton cmd="sysinfo" /> for more info.
         </ErrorBanner>
       )}
-      {props.errorMessage && (
-        <ErrorBanner data-testid="errorBanner">
-          {props.errorMessage}
-        </ErrorBanner>
+      {errorMessage && (
+        <ErrorBanner data-testid="errorBanner">{errorMessage}</ErrorBanner>
       )}
       {/* @GraphAcademy - Remove disconnected state */}
       {/* {props.connectionState === DISCONNECTED_STATE && (
@@ -92,7 +104,7 @@ const Main = React.memo(function Main(props: any) {
             cmd="server connect"
             data-testid="disconnectedBannerCode"
           />
-          &nbsp; to establish connection. There's a graph waiting for you.
+          {` to establish connection. There's a graph waiting for you.`}
         </NotAuthedBanner>
       )} */}
       {props.connectionState === PENDING_STATE && !past10Sec && (
@@ -100,7 +112,7 @@ const Main = React.memo(function Main(props: any) {
           Connection to server lost. Reconnecting...
         </WarningBanner>
       )}
-      {props.connectionState === CONNECTING_STATE && past5Sec && !past10Sec && (
+      {connectionState === CONNECTING_STATE && past5Sec && !past10Sec && (
         <NotAuthedBanner>Still connecting...</NotAuthedBanner>
       )}
       {past10Sec && (

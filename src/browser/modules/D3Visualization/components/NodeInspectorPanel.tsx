@@ -2,20 +2,20 @@ import React, { Component } from 'react'
 import { Resizable } from 'react-resizable'
 import { Icon } from 'semantic-ui-react'
 
-import OverviewPane, { GraphStyle } from './OverviewPane'
-import { DetailsPaneComponent } from './DetailsPane'
 import { GraphStats } from '../mapper'
+import { DetailsPaneComponent } from './DetailsPane'
+import { NodeInspectorDrawer } from './NodeInspectorDrawer'
+import OverviewPane from './OverviewPane'
 import {
   PaneContainer,
   StyledNodeInspectorTopMenuChevron,
   panelMinWidth
 } from './styled'
 import { VizItem } from './types'
-import { NodeInspectorDrawer } from './NodeInspectorDrawer'
+import { GraphStyle } from 'project-root/src/browser/modules/D3Visualization/graphStyle'
 
 interface NodeInspectorPanelProps {
   expanded: boolean
-  frameHeight: number
   graphStyle: GraphStyle
   hasTruncatedFields: boolean
   hoveredItem: VizItem
@@ -32,7 +32,6 @@ export class NodeInspectorPanel extends Component<NodeInspectorPanelProps> {
   render(): JSX.Element {
     const {
       expanded,
-      frameHeight,
       graphStyle,
       hasTruncatedFields,
       hoveredItem,
@@ -80,11 +79,10 @@ export class NodeInspectorPanel extends Component<NodeInspectorPanelProps> {
                 <DetailsPaneComponent
                   vizItem={shownEl}
                   graphStyle={graphStyle}
-                  frameHeight={frameHeight}
+                  nodeInspectorWidth={width}
                 />
               ) : (
                 <OverviewPane
-                  frameHeight={frameHeight}
                   graphStyle={graphStyle}
                   hasTruncatedFields={hasTruncatedFields}
                   stats={stats}

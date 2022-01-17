@@ -17,9 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import React, { useState } from 'react'
 
+import ClickableUrls from '../../../components/ClickableUrls'
+import { StyleableNodeLabel } from './StyleableNodeLabel'
+import { StyleableRelType } from './StyleableRelType'
 import {
   AlternatingTable,
   CopyCell,
@@ -27,29 +29,66 @@ import {
   PaneBody,
   PaneHeader,
   PaneTitle,
+  StyledExpandValueButton,
   StyledInlineList,
   ValueCell
 } from './styled'
-import ClickableUrls from '../../../components/ClickableUrls'
+import { NodeItem, RelationshipItem, VizItemProperty } from './types'
 import ClipboardCopier from 'browser-components/ClipboardCopier'
-import { NodeItem, RelationshipItem, VizNodeProperty } from './types'
-import { GraphStyle } from './OverviewPane'
-import { StyleableNodeLabel } from './StyleableNodeLabel'
-import { StyleableRelType } from './StyleableRelType'
-import { upperFirst } from 'services/utils'
 import { ShowMoreOrAll } from 'browser-components/ShowMoreOrAll/ShowMoreOrAll'
+import { GraphStyle } from 'project-root/src/browser/modules/D3Visualization/graphStyle'
+import { upperFirst } from 'services/utils'
+
+export const ELLIPSIS = '\u2026'
+export const WIDE_VIEW_THRESHOLD = 900
+export const MAX_LENGTH_NARROW = 150
+export const MAX_LENGTH_WIDE = 300
+type ExpandableValueProps = {
+  value: string
+  width: number
+  type: string
+}
+function ExpandableValue({ value, width, type }: ExpandableValueProps) {
+  const [expanded, setExpanded] = useState(false)
+
+  const maxLength =
+    width > WIDE_VIEW_THRESHOLD ? MAX_LENGTH_WIDE : MAX_LENGTH_NARROW
+
+  const handleExpandClick = () => {
+    setExpanded(true)
+  }
+
+  let valueShown = expanded ? value : value.slice(0, maxLength)
+  const valueIsTrimmed = valueShown.length !== value.length
+  valueShown += valueIsTrimmed ? ELLIPSIS : ''
+
+  return (
+    <>
+      {type.startsWith('Array') && '['}
+      <ClickableUrls text={valueShown} />
+      {valueIsTrimmed && (
+        <StyledExpandValueButton onClick={handleExpandClick}>
+          {' Show all'}
+        </StyledExpandValueButton>
+      )}
+      {type.startsWith('Array') && ']'}
+    </>
+  )
+}
 
 type PropertiesViewProps = {
-  visibleProperties: VizNodeProperty[]
+  visibleProperties: VizItemProperty[]
   onMoreClick: (numMore: number) => void
   totalNumItems: number
   moreStep: number
+  nodeInspectorWidth: number
 }
 function PropertiesView({
   visibleProperties,
   totalNumItems,
   onMoreClick,
-  moreStep
+  moreStep,
+  nodeInspectorWidth
 }: PropertiesViewProps) {
   return (
     <>
@@ -62,7 +101,11 @@ function PropertiesView({
                   <ClickableUrls text={key} />
                 </KeyCell>
                 <ValueCell>
-                  <ClickableUrls text={value} />
+                  <ExpandableValue
+                    value={value}
+                    width={nodeInspectorWidth}
+                    type={type}
+                  />
                 </ValueCell>
                 <CopyCell>
                   <ClipboardCopier
@@ -90,12 +133,12 @@ export const DETAILS_PANE_STEP_SIZE = 1000
 type DetailsPaneComponentProps = {
   vizItem: NodeItem | RelationshipItem
   graphStyle: GraphStyle
-  frameHeight: number
+  nodeInspectorWidth: number
 }
 export function DetailsPaneComponent({
   vizItem,
   graphStyle,
-  frameHeight
+  nodeInspectorWidth
 }: DetailsPaneComponentProps): JSX.Element {
   const [maxPropertiesCount, setMaxPropertiesCount] = useState(
     DETAILS_PANE_STEP_SIZE
@@ -103,7 +146,7 @@ export function DetailsPaneComponent({
 
   const allItemProperties = [
     { key: '<id>', value: `${vizItem.item.id}`, type: 'String' },
-    ...vizItem.item.properties
+    ...vizItem.item.propertyList
   ].sort((a, b) => (a.key < b.key ? -1 : 1))
   const visibleItemProperties = allItemProperties.slice(0, maxPropertiesCount)
 
@@ -127,10 +170,9 @@ export function DetailsPaneComponent({
         {vizItem.type === 'relationship' && (
           <StyleableRelType
             selectedRelType={{
-              propertyKeys: vizItem.item.properties.map(p => p.key),
+              propertyKeys: vizItem.item.propertyList.map(p => p.key),
               relType: vizItem.item.type
             }}
-            frameHeight={frameHeight}
             graphStyle={graphStyle}
           />
         )}
@@ -139,11 +181,10 @@ export function DetailsPaneComponent({
             return (
               <StyleableNodeLabel
                 key={label}
-                frameHeight={frameHeight}
                 graphStyle={graphStyle}
                 selectedLabel={{
                   label,
-                  propertyKeys: vizItem.item.properties.map(p => p.key)
+                  propertyKeys: vizItem.item.propertyList.map(p => p.key)
                 }}
               />
             )
@@ -155,6 +196,7 @@ export function DetailsPaneComponent({
           onMoreClick={handleMorePropertiesClick}
           moreStep={DETAILS_PANE_STEP_SIZE}
           totalNumItems={allItemProperties.length}
+          nodeInspectorWidth={nodeInspectorWidth}
         />
       </PaneBody>
     </>

@@ -17,57 +17,72 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-import React, { Component } from 'react'
 import deepmerge from 'deepmerge'
-import { connect, ConnectedComponent } from 'react-redux'
 import { debounce } from 'lodash'
+import React, { Component } from 'react'
+import { ConnectedComponent, connect } from 'react-redux'
+import { Action, Dispatch } from 'redux'
 
-import Node from '../lib/visualization/components/node'
-import Relationship from '../lib/visualization/components/relationship'
-import neoGraphStyle from '../graphStyle'
-import { GlobalState } from 'shared/globalState'
-import { GraphComponent } from './Graph'
+import { GetNodeNeighboursFn } from '../GraphEventHandler'
+import { GraphStyle } from '../graphStyle'
+import Graph from '../lib/visualization/components/Graph'
 import { GraphStats } from '../mapper'
-import { GraphStyle } from './OverviewPane'
+import { GraphComponent } from './Graph'
+import { NodeInspectorPanel, defaultPanelWidth } from './NodeInspectorPanel'
+import { StyledFullSizeContainer, panelMinWidth } from './styled'
 import { VizItem } from './types'
+import {
+  BasicNode,
+  BasicNodesAndRels,
+  BasicRelationship
+} from 'services/bolt/boltMappings'
 import { deepEquals } from 'services/utils'
-import { defaultPanelWidth, NodeInspectorPanel } from './NodeInspectorPanel'
-import { panelMinWidth, StyledFullSizeContainer } from './styled'
+import { GlobalState } from 'shared/globalState'
 import {
   getNodePropertiesExpandedByDefault,
   setNodePropertiesExpandedByDefault
 } from 'shared/modules/frames/framesDuck'
-import { Action, Dispatch } from 'redux'
 
-const deduplicateNodes = (nodes: any) => {
-  return nodes.reduce(
-    (all: any, curr: any) => {
-      if (all.taken.indexOf(curr.id) > -1) {
-        return all
-      } else {
-        all.nodes.push(curr)
-        all.taken.push(curr.id)
-        return all
-      }
-    },
-    { nodes: [], taken: [] }
-  ).nodes
+type DecuplicateHelper = {
+  nodes: BasicNode[]
+  taken: Record<string, boolean>
+  nodeLimitHit: boolean
 }
 
+const deduplicateNodes = (
+  nodes: BasicNode[],
+  limit: number
+): { nodes: BasicNode[]; nodeLimitHit: boolean } =>
+  nodes.reduce(
+    (all: DecuplicateHelper, curr: BasicNode) => {
+      if (all.nodes.length === limit) {
+        all.nodeLimitHit = true
+      } else if (!all.taken[curr.id]) {
+        all.nodes.push(curr)
+        all.taken[curr.id] = true
+      }
+      return all
+    },
+    { nodes: [], taken: {}, nodeLimitHit: false }
+  )
+
 type ExplorerComponentProps = {
-  relationships: Relationship[]
-  nodes: Node[]
-  initialNodeDisplay: any
+  relationships: BasicRelationship[]
+  nodes: BasicNode[]
+  initialNodeDisplay: number
   maxNeighbours: number
   graphStyleData: any
-  getNeighbours: any
+  getNeighbours: (
+    id: string,
+    currentNeighbourIds: string[] | undefined
+  ) => Promise<BasicNodesAndRels & { count: number }>
   updateStyle: any
-  frameHeight: number
-  fullscreen: boolean
-  assignVisElement: any
-  getAutoCompleteCallback: any
-  setGraph: any
+  isFullscreen: boolean
+  assignVisElement: (v: any) => void
+  getAutoCompleteCallback: (
+    callback: (rels: BasicRelationship[]) => void
+  ) => void
+  setGraph: (graph: Graph) => void
   hasTruncatedFields: boolean
 }
 type ExporerReduxProps = {
@@ -78,8 +93,8 @@ type ExporerReduxProps = {
 type ExplorerComponentState = {
   graphStyle: GraphStyle
   hoveredItem: VizItem
-  nodes: Node[]
-  relationships: Relationship[]
+  nodes: BasicNode[]
+  relationships: BasicRelationship[]
   selectedItem: VizItem
   stats: GraphStats
   styleVersion: number
@@ -97,27 +112,33 @@ export class ExplorerComponent extends Component<
 
   constructor(props: FullExplorerProps) {
     super(props)
-    const graphStyle = neoGraphStyle()
+    const graphStyle = new GraphStyle()
     this.defaultStyle = graphStyle.toSheet()
-    let relationships = this.props.relationships
-    let nodes = deduplicateNodes(this.props.nodes)
-    let selectedItem: VizItem = {
-      type: 'canvas',
-      item: {
-        nodeCount: Math.min(this.props.initialNodeDisplay, nodes.length),
-        relationshipCount: relationships.length
-      }
-    }
-    if (nodes.length > parseInt(this.props.initialNodeDisplay)) {
-      nodes = nodes.slice(0, this.props.initialNodeDisplay)
-      relationships = this.props.relationships.filter((item: any) => {
-        return nodes.filter((node: any) => node.id === item.startNodeId) > 0
-      })
-      selectedItem = {
-        type: 'status-item',
-        item: `Not all return nodes are being displayed due to Initial Node Display setting. Only ${this.props.initialNodeDisplay} of ${nodes.length} nodes are being displayed`
-      }
-    }
+    const { nodes, nodeLimitHit } = deduplicateNodes(
+      this.props.nodes,
+      this.props.initialNodeDisplay
+    )
+    const relationships = nodeLimitHit
+      ? this.props.relationships.filter(
+          rel =>
+            !!nodes.find(node => node.id === rel.startNodeId) &&
+            !!nodes.find(node => node.id === rel.endNodeId)
+        )
+      : this.props.relationships
+
+    const selectedItem: VizItem = nodeLimitHit
+      ? {
+          type: 'status-item',
+          item: `Not all return nodes are being displayed due to Initial Node Display setting. Only ${this.props.initialNodeDisplay} of ${nodes.length} nodes are being displayed`
+        }
+      : {
+          type: 'canvas',
+          item: {
+            nodeCount: nodes.length,
+            relationshipCount: relationships.length
+          }
+        }
+
     if (this.props.graphStyleData) {
       const rebasedStyle = deepmerge(
         this.defaultStyle,
@@ -142,31 +163,31 @@ export class ExplorerComponent extends Component<
     }
   }
 
-  getNodeNeighbours(node: any, currentNeighbours: any, callback: any) {
-    if (currentNeighbours.length > this.props.maxNeighbours) {
-      callback(null, { nodes: [], relationships: [] })
+  getNodeNeighbours: GetNodeNeighboursFn = (
+    node,
+    currentNeighbourIds,
+    callback
+  ) => {
+    if (currentNeighbourIds.length > this.props.maxNeighbours) {
+      callback({ nodes: [], relationships: [] })
     }
-    this.props.getNeighbours(node.id, currentNeighbours).then(
-      (result: any) => {
-        const nodes = result.nodes
-        if (
-          result.count >
-          this.props.maxNeighbours - currentNeighbours.length
-        ) {
+    this.props.getNeighbours(node.id, currentNeighbourIds).then(
+      ({ nodes, relationships, count }) => {
+        if (count > this.props.maxNeighbours - currentNeighbourIds.length) {
           this.setState({
             selectedItem: {
               type: 'status-item',
               item: `Rendering was limited to ${
                 this.props.maxNeighbours
-              } of the node's total ${result.count +
-                currentNeighbours.length} neighbours due to browser config maxNeighbours.`
+              } of the node's total ${count +
+                currentNeighbourIds.length} neighbours due to browser config maxNeighbours.`
             }
           })
         }
-        callback(null, { nodes: nodes, relationships: result.relationships })
+        callback({ nodes, relationships })
       },
       () => {
-        callback(null, { nodes: [], relationships: [] })
+        callback({ nodes: [], relationships: [] })
       }
     )
   }
@@ -186,12 +207,12 @@ export class ExplorerComponent extends Component<
     this.setState({ selectedItem })
   }
 
-  onGraphModelChange(stats: GraphStats) {
+  onGraphModelChange(stats: GraphStats): void {
     this.setState({ stats })
     this.props.updateStyle(this.state.graphStyle.toSheet())
   }
 
-  componentDidUpdate(prevProps: any) {
+  componentDidUpdate(prevProps: ExplorerComponentProps): void {
     if (!deepEquals(prevProps.graphStyleData, this.props.graphStyleData)) {
       if (this.props.graphStyleData) {
         const rebasedStyle = deepmerge(
@@ -216,19 +237,18 @@ export class ExplorerComponent extends Component<
     }
   }
 
-  render() {
+  render(): JSX.Element {
     // This is a workaround to make the style reset to the same colors as when starting the browser with an empty style
     // If the legend component has the style it will ask the neoGraphStyle object for styling before the graph component,
     // and also doing this in a different order from the graph. This leads to different default colors being assigned to different labels.
     const graphStyle = this.state.freezeLegend
-      ? neoGraphStyle()
+      ? new GraphStyle()
       : this.state.graphStyle
 
     return (
       <StyledFullSizeContainer id="svg-vis">
         <GraphComponent
-          fullscreen={this.props.fullscreen}
-          frameHeight={this.props.frameHeight}
+          isFullscreen={this.props.isFullscreen}
           relationships={this.state.relationships}
           nodes={this.state.nodes}
           getNodeNeighbours={this.getNodeNeighbours.bind(this)}
@@ -245,7 +265,6 @@ export class ExplorerComponent extends Component<
           }
         />
         <NodeInspectorPanel
-          frameHeight={this.props.frameHeight}
           graphStyle={graphStyle}
           hasTruncatedFields={this.props.hasTruncatedFields}
           hoveredItem={this.state.hoveredItem}

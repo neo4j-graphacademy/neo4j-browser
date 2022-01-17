@@ -23,7 +23,7 @@ import { handleRefreshingToken, authLog } from 'neo4j-client-sso'
 import bolt from 'services/bolt/bolt'
 import * as discovery from 'shared/modules/discovery/discoveryDuck'
 import { NATIVE, NO_AUTH, SSO } from 'services/bolt/boltHelpers'
-import { fetchMetaData } from 'shared/modules/dbMeta/dbMetaDuck'
+import { fetchMetaData } from 'shared/modules/dbMeta/actions'
 import { executeSystemCommand } from 'shared/modules/commands/commandsDuck'
 import {
   getInitCmd,
@@ -77,7 +77,7 @@ export type ConnectionReduxState = {
   useDb: string | null
   lastUseDb: string | null
 }
-type ConnectionState =
+export type ConnectionState =
   | typeof DISCONNECTED_STATE
   | typeof CONNECTED_STATE
   | typeof PENDING_STATE
@@ -451,7 +451,7 @@ export type DiscoverableData = {
   supportsMultiDb?: boolean
   host?: string
   encrypted?: string
-  hasForceURL?: boolean
+  hasForceUrl?: boolean
   SSOError?: string
   attemptSSOLogin?: boolean
   SSOProviders?: SSOProvider[]
@@ -505,8 +505,7 @@ export const startupConnectEpic = (action$: any, store: any) => {
       )
 
       if (
-        //TODO Considder the SSO implications of this
-        !(discovered && discovered.hasForceURL) && // If we have force url, don't try old connection data
+        !(discovered && discovered.hasForceUrl) && // If we have force url, don't try old connection data
         shouldTryAutoconnecting(savedConnection)
       ) {
         try {

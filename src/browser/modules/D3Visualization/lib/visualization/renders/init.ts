@@ -17,125 +17,84 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import Renderer from '../components/renderer'
-const noop = function() {}
+import { BaseType } from 'd3-selection'
+
+import Relationship from '../components/Relationship'
+import Renderer from '../components/Renderer'
+import VizNode, { NodeCaptionLine } from '../components/VizNode'
+
+const noop = () => undefined
 
 const nodeRingStrokeSize = 8
 
-const nodeOutline = new Renderer({
-  onGraphChange(selection: any, viz: any) {
-    const circles = selection
+const nodeOutline = new Renderer<VizNode>({
+  name: 'nodeOutline',
+  onGraphChange(selection, viz) {
+    return selection
       .selectAll('circle.outline')
-      .data((node: any) => [node])
-
-    circles
-      .enter()
-      .append('circle')
+      .data(node => [node])
+      .join('circle')
       .classed('outline', true)
-      .attr({
-        cx: 0,
-        cy: 0
-      })
-
-    circles.attr({
-      r(node: any) {
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', (node: VizNode) => {
         return node.radius
-      },
-      fill(node: any) {
+      })
+      .attr('fill', (node: VizNode) => {
         return viz.style.forNode(node).get('color')
-      },
-      stroke(node: any) {
+      })
+      .attr('stroke', (node: VizNode) => {
         return viz.style.forNode(node).get('border-color')
-      },
-      'stroke-width'(node: any) {
+      })
+      .attr('stroke-width', (node: VizNode) => {
         return viz.style.forNode(node).get('border-width')
-      }
-    })
-
-    return circles.exit().remove()
-  },
-  onTick: noop
-})
-
-const nodeCaption = new Renderer({
-  onGraphChange(selection: any, viz: any) {
-    const text = selection
-      .selectAll('text.caption')
-      .data((node: any) => node.caption)
-
-    text
-      .enter()
-      .append('text')
-      // .classed('caption', true)
-      .attr({ 'text-anchor': 'middle' })
-      .attr({ 'pointer-events': 'none' })
-
-    text
-      .text((line: any) => line.text)
-      .attr('x', 0)
-      .attr('y', (line: any) => line.baseline)
-      .attr('font-size', (line: any) =>
-        viz.style.forNode(line.node).get('font-size')
-      )
-      .attr({
-        fill(line: any) {
-          return viz.style.forNode(line.node).get('text-color-internal')
-        }
       })
+  },
+  onTick: noop
+})
 
-    return text.exit().remove()
+const nodeCaption = new Renderer<VizNode>({
+  name: 'nodeCaption',
+  onGraphChange(selection, viz) {
+    return (
+      selection
+        .selectAll('text.caption')
+        .data((node: VizNode) => node.caption)
+        .join('text')
+        // Classed element ensures duplicated data will be removed before adding
+        .classed('caption', true)
+        .attr('text-anchor', 'middle')
+        .attr('pointer-events', 'none')
+        .attr('x', 0)
+        .attr('y', (line: NodeCaptionLine) => line.baseline)
+        .attr('font-size', (line: NodeCaptionLine) =>
+          viz.style.forNode(line.node).get('font-size')
+        )
+        .attr('fill', (line: NodeCaptionLine) =>
+          viz.style.forNode(line.node).get('text-color-internal')
+        )
+        .text((line: NodeCaptionLine) => line.text)
+    )
   },
 
   onTick: noop
 })
 
-const nodeIcon = new Renderer({
-  onGraphChange(selection: any, viz: any) {
-    const text = selection.selectAll('text').data((node: any) => node.caption)
-
-    text
-      .enter()
-      .append('text')
-      .attr({ 'text-anchor': 'middle' })
-      .attr({ 'pointer-events': 'none' })
-      .attr({ 'font-family': 'streamline' })
-
-    text
-      .text((line: any) => viz.style.forNode(line.node).get('icon-code'))
-      .attr('dy', (line: any) => line.node.radius / 16)
-      .attr('font-size', (line: any) => line.node.radius)
-      .attr({
-        fill(line: any) {
-          return viz.style.forNode(line.node).get('text-color-internal')
-        }
-      })
-
-    return text.exit().remove()
-  },
-
-  onTick: noop
-})
-
-const nodeRing = new Renderer({
-  onGraphChange(selection: any) {
+const nodeRing = new Renderer<VizNode>({
+  name: 'nodeRing',
+  onGraphChange(selection) {
     const circles = selection
       .selectAll('circle.ring')
-      .data((node: any) => [node])
+      .data((node: VizNode) => [node])
+
     circles
       .enter()
       .insert('circle', '.outline')
       .classed('ring', true)
-      .attr({
-        cx: 0,
-        cy: 0,
-        'stroke-width': `${nodeRingStrokeSize}px`
-      })
-
-    circles.attr({
-      r(node: any) {
-        return node.radius + 4
-      }
-    })
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('stroke-width', `${nodeRingStrokeSize}px`)
+      .attr('r', (node: VizNode) => node.radius + 4)
 
     return circles.exit().remove()
   },
@@ -143,105 +102,85 @@ const nodeRing = new Renderer({
   onTick: noop
 })
 
-const arrowPath = new Renderer({
+const arrowPath = new Renderer<Relationship>({
   name: 'arrowPath',
-  onGraphChange(selection: any, viz: any) {
-    const paths = selection.selectAll('path.outline').data((rel: any) => [rel])
 
-    paths
-      .enter()
-      .append('path')
+  onGraphChange(selection, viz) {
+    return selection
+      .selectAll('path.outline')
+      .data((rel: any) => [rel])
+      .join('path')
       .classed('outline', true)
-
-    paths
       .attr('fill', (rel: any) => viz.style.forRelationship(rel).get('color'))
       .attr('stroke', 'none')
-
-    return paths.exit().remove()
   },
 
-  onTick(selection: any) {
+  onTick(selection) {
     return selection
-      .selectAll('path')
-      .attr('d', (d: any) => d.arrow.outline(d.shortCaptionLength))
+      .selectAll<BaseType, Relationship>('path')
+      .attr('d', d => d.arrow!.outline(d.shortCaptionLength ?? 0))
   }
 })
 
-const relationshipType = new Renderer({
+const relationshipType = new Renderer<Relationship>({
   name: 'relationshipType',
-  onGraphChange(selection: any, viz: any) {
-    const texts = selection.selectAll('text').data((rel: any) => [rel])
-
-    texts
-      .enter()
-      .append('text')
-      .attr({ 'text-anchor': 'middle' })
-      .attr({ 'pointer-events': 'none' })
-
-    texts
-      .attr('font-size', (rel: any) =>
-        viz.style.forRelationship(rel).get('font-size')
-      )
-      .attr('fill', (rel: any) =>
-        viz.style.forRelationship(rel).get(`text-color-${rel.captionLayout}`)
-      )
-
-    return texts.exit().remove()
-  },
-
-  onTick(selection: any, viz: any) {
+  onGraphChange(selection, viz) {
     return selection
       .selectAll('text')
-      .attr('x', (rel: any) => rel.arrow.midShaftPoint.x)
+      .data(rel => [rel])
+      .join('text')
+      .attr('text-anchor', 'middle')
+      .attr('pointer-events', 'none')
+      .attr('font-size', rel => viz.style.forRelationship(rel).get('font-size'))
+      .attr('fill', rel =>
+        viz.style.forRelationship(rel).get(`text-color-${rel.captionLayout}`)
+      )
+  },
+
+  onTick(selection, viz) {
+    return selection
+      .selectAll<BaseType, Relationship>('text')
+      .attr('x', rel => rel?.arrow?.midShaftPoint?.x ?? 0)
       .attr(
         'y',
-        (rel: any) =>
-          rel.arrow.midShaftPoint.y +
+        rel =>
+          (rel?.arrow?.midShaftPoint?.y ?? 0) +
           parseFloat(viz.style.forRelationship(rel).get('font-size')) / 2 -
           1
       )
-      .attr('transform', (rel: any) => {
+      .attr('transform', rel => {
         if (rel.naturalAngle < 90 || rel.naturalAngle > 270) {
-          return `rotate(180 ${rel.arrow.midShaftPoint.x} ${rel.arrow.midShaftPoint.y})`
+          return `rotate(180 ${rel?.arrow?.midShaftPoint?.x ?? 0} ${rel?.arrow
+            ?.midShaftPoint?.y ?? 0})`
         } else {
           return null
         }
       })
-      .text((rel: any) => rel.shortCaption)
+      .text(rel => rel.shortCaption ?? '')
   }
 })
 
-const relationshipOverlay = new Renderer({
+const relationshipOverlay = new Renderer<Relationship>({
   name: 'relationshipOverlay',
-  onGraphChange(selection: any) {
-    const rects = selection.selectAll('path.overlay').data((rel: any) => [rel])
-
-    rects
-      .enter()
-      .append('path')
+  onGraphChange(selection) {
+    return selection
+      .selectAll('path.overlay')
+      .data(rel => [rel])
+      .join('path')
       .classed('overlay', true)
-
-    return rects.exit().remove()
   },
 
-  onTick(selection: any) {
+  onTick(selection) {
     const band = 16
 
     return selection
-      .selectAll('path.overlay')
-      .attr('d', (d: any) => d.arrow.overlay(band))
+      .selectAll<BaseType, Relationship>('path.overlay')
+      .attr('d', d => d.arrow!.overlay(band))
   }
 })
 
-const node = []
-node.push(nodeOutline)
-node.push(nodeIcon)
-node.push(nodeCaption)
-node.push(nodeRing)
+const node = [nodeOutline, nodeCaption, nodeRing]
 
-const relationship = []
-relationship.push(arrowPath)
-relationship.push(relationshipType)
-relationship.push(relationshipOverlay)
+const relationship = [arrowPath, relationshipType, relationshipOverlay]
 
 export { node, relationship }

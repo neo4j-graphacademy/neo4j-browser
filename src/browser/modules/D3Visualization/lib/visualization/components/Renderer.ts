@@ -17,16 +17,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-export default class Renderer {
-  onGraphChange: any = null
-  onTick: any = null
-  constructor(opts: any) {
-    Object.assign(this, opts == null ? {} : opts)
-    if (this.onGraphChange === null) {
-      this.onGraphChange = function() {}
-    }
-    if (this.onTick === null) {
-      this.onTick = function() {}
-    }
+import { BaseType, Selection } from 'd3-selection'
+
+import { VizObj } from './Visualization'
+
+const noOp = () => undefined
+type RendererEventHandler<Datum> = (
+  selection: Selection<BaseType, Datum, BaseType, unknown>,
+  viz: VizObj
+) => void
+
+export default class Renderer<Datum> {
+  onGraphChange: RendererEventHandler<Datum>
+  onTick: RendererEventHandler<Datum>
+  name: string
+
+  constructor({
+    onGraphChange = noOp,
+    onTick = noOp,
+    name
+  }: {
+    onGraphChange?: RendererEventHandler<Datum>
+    onTick?: RendererEventHandler<Datum>
+    name: string
+  }) {
+    this.onGraphChange = onGraphChange
+    this.onTick = onTick
+    this.name = name
   }
 }

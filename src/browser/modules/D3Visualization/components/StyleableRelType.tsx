@@ -21,18 +21,16 @@
 import React from 'react'
 import { GrassEditor } from './GrassEditor'
 import { Popup } from 'semantic-ui-react'
-import { GraphStyle } from './OverviewPane'
 import { StyledRelationship } from 'browser/modules/DBMSInfo/styled'
+import { GraphStyle } from 'project-root/src/browser/modules/D3Visualization/graphStyle'
 
 export type StyleableRelTypeProps = {
   graphStyle: GraphStyle
-  frameHeight: number
   selectedRelType: { relType: string; propertyKeys: string[]; count?: number }
 }
 export function StyleableRelType({
   selectedRelType,
-  graphStyle,
-  frameHeight
+  graphStyle
 }: StyleableRelTypeProps): JSX.Element {
   const styleForRelType = graphStyle.forRelationship({
     type: selectedRelType.relType
@@ -49,6 +47,7 @@ export function StyleableRelType({
             backgroundColor: styleForRelType.get('color'),
             color: styleForRelType.get('text-color-internal')
           }}
+          data-testid={`property-details-overview-relationship-type-${selectedRelType.relType}`}
         >
           {selectedRelType.count !== undefined
             ? `${selectedRelType.relType} (${selectedRelType.count})`
@@ -57,10 +56,7 @@ export function StyleableRelType({
       }
       wide
     >
-      <GrassEditor
-        selectedRelType={selectedRelType}
-        frameHeight={frameHeight}
-      />
+      <GrassEditor selectedRelType={selectedRelType} />
     </Popup>
   )
 }

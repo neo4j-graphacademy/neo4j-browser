@@ -21,16 +21,40 @@
 import React from 'react'
 import { render } from '@testing-library/react'
 import neo4j from 'neo4j-driver'
-import { Visualization } from './VisualizationView'
+import { Visualization, VisualizationProps } from './VisualizationView'
 import { Provider } from 'react-redux'
 import configureMockStore from 'redux-mock-store'
+import { Bus } from 'suber'
 
+const mockBus = ({
+  self: jest.fn(),
+  send: jest.fn()
+} as unknown) as Bus
+
+function mockVizProps(
+  overrides?: Partial<VisualizationProps>
+): VisualizationProps {
+  return {
+    updated: 23,
+    maxNeighbours: 200,
+    autoComplete: false,
+    assignVisElement: () => undefined,
+    bus: mockBus,
+    isFullscreen: false,
+    initialNodeDisplay: 400,
+    maxFieldItems: 200,
+    result: null,
+    graphStyleData: null,
+    updateStyle: () => undefined,
+    ...overrides
+  }
+}
 const mockStore = configureMockStore()
 const store = mockStore({
   frames: {}
 })
 
-function renderWithRedux(children: any) {
+function renderWithRedux(children: JSX.Element) {
   return render(<Provider store={store}>{children}</Provider>)
 }
 const mockEmptyResult = {
@@ -43,15 +67,16 @@ const mockResult = {
   records: [{ keys: ['0'], __fields: [node], get: (_key: any) => node }]
 }
 
-test('Visualization renders', () => {
+test('Visualization renders empty content', () => {
   const { container } = renderWithRedux(
-    <Visualization result={mockEmptyResult} />
+    <Visualization {...mockVizProps({ result: mockEmptyResult })} />
   )
   expect(container).toMatchSnapshot()
 })
+
 test('Visualization renders with result and escapes any HTML', () => {
   const { container } = renderWithRedux(
-    <Visualization updateStyle={() => {}} autoComplete result={mockResult} />
+    <Visualization {...mockVizProps({ result: mockResult })} />
   )
   expect(container).toMatchSnapshot()
 })

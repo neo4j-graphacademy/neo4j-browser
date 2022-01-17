@@ -17,79 +17,76 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import d3 from 'd3'
-import Renderer from '../components/renderer'
+import { BaseType, Selection } from 'd3-selection'
+import { arc as d3Arc } from 'd3-shape'
+
+import Renderer from '../components/Renderer'
+import { VizObj } from '../components/Visualization'
+import VizNode from '../components/VizNode'
 import icons from './d3Icons'
 
-const noop = function() {}
+const noOp = () => undefined
 
 const numberOfItemsInContextMenu = 3
 
-const arc = function(radius?: any, itemNumber?: any, width?: any) {
-  const localWidth = width == null ? 30 : width
+const drawArc = function(radius: number, itemNumber: number, width = 30) {
   const startAngle =
     ((2 * Math.PI) / numberOfItemsInContextMenu) * (itemNumber - 1)
   const endAngle = startAngle + (2 * Math.PI) / numberOfItemsInContextMenu
   const innerRadius = Math.max(radius + 8, 20)
-  return d3.svg
-    .arc()
+  return d3Arc()
     .innerRadius(innerRadius)
-    .outerRadius(innerRadius + localWidth)
+    .outerRadius(innerRadius + width)
     .startAngle(startAngle)
     .endAngle(endAngle)
     .padAngle(0.03)
 }
 
-const getSelectedNode = function(node: any) {
-  if (node.selected) {
-    return [node]
-  } else {
-    return []
-  }
-}
+const getSelectedNode = (node: VizNode) => (node.selected ? [node] : [])
 
 const attachContextEvent = (
-  event: any,
-  elems: any[],
-  viz: any,
-  content: any,
-  label: any
-) =>
-  (() => {
-    const result = []
-    for (const elem of Array.from(elems)) {
-      elem.on('mousedown.drag', () => {
-        ;(d3.event as Event).stopPropagation()
-        return null
-      })
-      elem.on('mouseup', (node: any) => viz.trigger(event, node))
-      elem.on('mouseover', (node: any) => {
-        node.contextMenu = {
-          menuSelection: event,
-          menuContent: content,
-          label
-        }
-        return viz.trigger('menuMouseOver', node)
-      })
-      result.push(
-        elem.on('mouseout', (node: any) => {
-          delete node.contextMenu
-          return viz.trigger('menuMouseOut', node)
-        })
-      )
-    }
-    return result
-  })()
+  eventType: string,
+  elements: [
+    Selection<SVGPathElement, VizNode, BaseType, VizNode>,
+    Selection<SVGGElement, VizNode, BaseType, VizNode>
+  ],
+  viz: VizObj,
+  content: string,
+  label: string
+) => {
+  elements.forEach(element => {
+    element.on('mousedown.drag', (event: Event) => {
+      event.stopPropagation()
+      return null
+    })
+    element.on('mouseup', (_event: Event, node: VizNode) =>
+      viz.trigger(eventType, node)
+    )
+    element.on('mouseover', (_event: Event, node: VizNode) => {
+      node.contextMenu = {
+        menuSelection: eventType,
+        menuContent: content,
+        label
+      }
+      return viz.trigger('menuMouseOver', node)
+    })
+
+    element.on('mouseout', (_event: Event, node: VizNode) => {
+      delete node.contextMenu
+      return viz.trigger('menuMouseOut', node)
+    })
+  })
+}
 
 const createMenuItem = function(
-  selection: any,
-  viz: any,
-  eventName: any,
-  itemNumber: any,
-  className: any,
-  position: any,
-  textValue: any,
-  helpValue: any
+  selection: Selection<BaseType, VizNode, BaseType, unknown>,
+  viz: VizObj,
+  eventType: string,
+  itemIndex: number,
+  className: string,
+  position: [number, number],
+  svgIconKey: 'Expand / Collapse' | 'Unlock' | 'Remove',
+  tooltip: string
 ) {
   const path = selection.selectAll(`path.${className}`).data(getSelectedNode)
   const iconPath = selection
@@ -101,116 +98,118 @@ const createMenuItem = function(
     .append('path')
     .classed(className, true)
     .classed('context-menu-item', true)
-    .attr({
-      d(node: any) {
-        // @ts-expect-error Expected 1-2 arguments, but got 0.ts(2554)
-        return arc(node.radius, itemNumber, 1)()
-      }
+    .attr('d', node => {
+      // @ts-expect-error Expected 1-2 arguments, but got 0.ts(2554)
+      return drawArc(node.radius, itemIndex, 1)()
     })
 
-  const rawSvgIcon = icons[textValue]
+  const rawSvgIcon = icons[svgIconKey]
+  const svgIcon = document.importNode(
+    new DOMParser().parseFromString(rawSvgIcon, 'application/xml')
+      .documentElement.firstChild as HTMLElement,
+    true
+  )
   const icon = iconPath
     .enter()
-    .appendSVG(rawSvgIcon)
+    .append('g')
+    .html(svgIcon.innerHTML)
+    .classed('icon', true)
     .classed(className, true)
     .classed('context-menu-item', true)
-    .attr({
-      transform(node: any) {
-        return `translate(${Math.floor(
-          // @ts-expect-error ts-migrate(2554) FIXME: Expected 3 arguments, but got 2.
-          arc(node.radius, itemNumber).centroid()[0] + (position[0] * 100) / 100
-        )},${Math.floor(
-          // @ts-expect-error ts-migrate(2554) FIXME: Expected 3 arguments, but got 2.
-          arc(node.radius, itemNumber).centroid()[1] + (position[1] * 100) / 100
-        )}) scale(0.7)`
-      },
-      color(node: any) {
-        return viz.style.forNode(node).get('text-color-internal')
-      }
+    .attr('transform', (node: VizNode) => {
+      return `translate(${Math.floor(
+        // @ts-expect-error
+        drawArc(node.radius, itemIndex).centroid()[0] +
+          (position[0] * 100) / 100
+      )},${Math.floor(
+        // @ts-expect-error
+        drawArc(node.radius, itemIndex).centroid()[1] +
+          (position[1] * 100) / 100
+      )}) scale(0.7)`
+    })
+    .attr('color', (node: VizNode) => {
+      return viz.style.forNode(node).get('text-color-internal')
     })
 
-  attachContextEvent(eventName, [tab, icon], viz, helpValue, rawSvgIcon)
+  attachContextEvent(eventType, [tab, icon], viz, tooltip, rawSvgIcon)
 
   tab
     .transition()
     .duration(200)
-    .attr({
-      d(node: any) {
-        // @ts-expect-error Expected 1-2 arguments, but got 0.ts(2554)
-        return arc(node.radius, itemNumber)()
-      }
+    .attr('d', (node: VizNode) => {
+      // @ts-expect-error Expected 1-2 arguments, but got 0.ts(2554)
+      return drawArc(node.radius, itemIndex)()
     })
 
   path
-    .exit()
+    .exit<VizNode>()
     .transition()
     .duration(200)
-    .attr({
-      d(node: any) {
-        // @ts-expect-error Expected 1-2 arguments, but got 0.ts(2554)
-        return arc(node.radius, itemNumber, 1)()
-      }
+    .attr('d', (node: VizNode) => {
+      // @ts-expect-error Expected 1-2 arguments, but got 0.ts(2554)
+      return drawArc(node.radius, itemIndex, 1)()
     })
     .remove()
 
   return iconPath.exit().remove()
 }
 
-const donutRemoveNode = new Renderer({
-  onGraphChange(selection: any, viz: any) {
+const donutRemoveNode = new Renderer<VizNode>({
+  name: 'donutRemoveNode',
+  onGraphChange(selection, viz) {
     return createMenuItem(
       selection,
       viz,
       'nodeClose',
       1,
-      'remove_node',
+      'remove-node',
       [-8, 0],
       'Remove',
       'Dismiss'
     )
   },
 
-  onTick: noop
+  onTick: noOp
 })
 
-const donutExpandNode = new Renderer({
-  onGraphChange(selection: any, viz: any) {
+const donutExpandNode = new Renderer<VizNode>({
+  name: 'donutExpandNode',
+  onGraphChange(selection, viz) {
     return createMenuItem(
       selection,
       viz,
       'nodeDblClicked',
       2,
-      'expand_node',
+      'expand-node',
       [-8, -10],
       'Expand / Collapse',
       'Expand / Collapse child relationships'
     )
   },
 
-  onTick: noop
+  onTick: noOp
 })
 
-const donutUnlockNode = new Renderer({
-  onGraphChange(selection: any, viz: any) {
+const donutUnlockNode = new Renderer<VizNode>({
+  name: 'donutUnlockNode',
+  onGraphChange(selection, viz) {
     return createMenuItem(
       selection,
       viz,
       'nodeUnlock',
       3,
-      'unlock_node',
+      'unlock-node',
       [-10, -6],
       'Unlock',
       'Unlock the node to re-layout the graph'
     )
   },
 
-  onTick: noop
+  onTick: noOp
 })
 
-const menu: any[] = []
-
-menu.push(donutExpandNode)
-menu.push(donutRemoveNode)
-menu.push(donutUnlockNode)
-
-export { menu }
+export const nodeMenuRenderer = [
+  donutExpandNode,
+  donutRemoveNode,
+  donutUnlockNode
+]

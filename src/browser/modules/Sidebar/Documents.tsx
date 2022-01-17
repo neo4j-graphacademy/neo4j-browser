@@ -24,7 +24,7 @@ import semver from 'semver'
 
 import { cannyOptions, CANNY_FEATURE_REQUEST_URL } from 'browser-services/canny'
 import { GlobalState } from 'shared/globalState'
-import { getVersion } from 'shared/modules/dbMeta/dbMetaDuck'
+import { getVersion } from 'shared/modules/dbMeta/state'
 import {
   TRACK_CANNY_CHANGELOG,
   TRACK_CANNY_FEATURE_REQUEST
@@ -43,7 +43,7 @@ import {
 import { formatDocVersion } from './docsUtils'
 
 export const shouldLinkToNewRefs = (v: string): boolean => {
-  if (!semver.valid(v)) return false
+  if (!semver.valid(v)) return true
   return semver.gte(v, '3.5.0-alpha01')
 }
 
@@ -143,7 +143,11 @@ const Documents = (props: DocumentsProps) => {
       <StyledHeaderContainer>
         <DrawerHeader>Help &amp; Learn</DrawerHeader>
         {window.Canny && (
-          <a data-canny-changelog onClick={props.trackCannyChangelog}>
+          <a
+            data-canny-changelog
+            data-testid="documentDrawerCanny"
+            onClick={props.trackCannyChangelog}
+          >
             <CannyNotificationsIcon />
           </a>
         )}
@@ -160,7 +164,7 @@ const Documents = (props: DocumentsProps) => {
           props.trackCannyFeatureRequest()
           window.open(CANNY_FEATURE_REQUEST_URL, '_blank')
         }}
-      ></StyledFeedbackButton>
+      />
       <StyledFullSizeDrawerBody>
         <DocumentItems header="Useful commands" items={useful} />
         <DocumentItems header="Documentation links" items={docs} />
@@ -171,7 +175,7 @@ const Documents = (props: DocumentsProps) => {
 }
 
 const mapStateToProps = (state: GlobalState) => {
-  const version = getVersion(state)
+  const version = getVersion(state) || 'current'
   return {
     version,
     urlVersion: formatDocVersion(version)

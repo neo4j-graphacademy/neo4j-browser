@@ -19,10 +19,15 @@
  */
 
 import semver from 'semver'
+import { VERSION_FOR_EDITOR_HISTORY_SETTING } from './constants'
 import { guessSemverVersion } from '../features/featureDuck.utils'
 
-export function extractServerInfo(res: any) {
-  const serverInfo = {
+type ServerInfo = {
+  version: string | null
+  edition: string | null
+}
+export function extractServerInfo(res: any): ServerInfo {
+  const serverInfo: ServerInfo = {
     version: 'unknown',
     edition: ''
   }
@@ -51,4 +56,9 @@ export function extractServerInfo(res: any) {
   }
 
   return serverInfo
+}
+
+export const versionHasEditorHistorySetting = (version: string | null) => {
+  if (!version) return false
+  return semver.gte(version, VERSION_FOR_EDITOR_HISTORY_SETTING)
 }

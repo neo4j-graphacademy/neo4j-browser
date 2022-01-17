@@ -23,13 +23,13 @@ import { GlobalState } from 'shared/globalState'
 import {
   shouldRetainConnectionCredentials,
   shouldRetainEditorHistory
-} from '../modules/dbMeta/dbMetaDuck'
+} from '../modules/dbMeta/state'
 import { initialState as settingsInitialState } from '../modules/settings/settingsDuck'
 
 export const keyPrefix = 'neo4j.'
 let storage = window.localStorage
 
-export type key =
+export type LocalStorageKey =
   | 'connections'
   | 'settings'
   | 'history'
@@ -39,9 +39,12 @@ export type key =
   | 'syncConsent'
   | 'udc'
   | 'experimentalFeatures'
-const keys: key[] = []
+  | 'guides'
+const keys: LocalStorageKey[] = []
 
-export function getItem(key: key): GlobalState[key] | undefined {
+export function getItem(
+  key: LocalStorageKey
+): GlobalState[LocalStorageKey] | undefined {
   try {
     const serializedVal = storage.getItem(keyPrefix + key)
     if (serializedVal === null) return undefined
@@ -73,7 +76,7 @@ export function getAll(): Partial<GlobalState> {
           playImplicitInitCommands: true
         }
       } else {
-        out[key] = current as any
+        Object.assign(out, { [key]: current })
       }
     }
   })
@@ -104,6 +107,8 @@ export function createReduxMiddleware(): Middleware {
         })
       } else if (key === 'history' && !shouldRetainEditorHistory(state)) {
         setItem(key, [])
+      } else if (key === 'guides') {
+        setItem(key, { ...state[key], currentGuide: null })
       } else {
         setItem(key, state[key])
       }
@@ -112,7 +117,7 @@ export function createReduxMiddleware(): Middleware {
   }
 }
 
-export function applyKeys(...newKeys: key[]): void {
+export function applyKeys(...newKeys: LocalStorageKey[]): void {
   keys.push(...newKeys)
 }
 export const setStorage = (s: Storage): void => {

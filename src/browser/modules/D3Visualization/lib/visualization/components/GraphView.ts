@@ -17,19 +17,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import viz from './visualization'
+import Graph from './Graph'
+import viz, { MeasureSizeFn, VizObj } from './Visualization'
 import layout from './layout'
+import GraphStyle from 'project-root/src/browser/modules/D3Visualization/graphStyle'
 
-export default class graphView {
+export default class GraphView {
   callbacks: any
-  graph: any
-  style: any
-  viz: any
-  constructor(element: any, measureSize: any, graph: any, style: any) {
+  graph: Graph
+  style: GraphStyle
+  viz: VizObj
+
+  constructor(
+    element: any,
+    measureSize: MeasureSizeFn,
+    graph: Graph,
+    style: GraphStyle
+  ) {
     this.graph = graph
     this.style = style
-    const forceLayout = layout.force()
-    this.viz = viz(element, measureSize, this.graph, forceLayout, this.style)
+    this.viz = viz(element, measureSize, this.graph, layout.force(), this.style)
     this.callbacks = {}
     const { callbacks } = this
     this.viz.trigger = (() => (event: any, ...args: any[]) =>
@@ -54,30 +61,27 @@ export default class graphView {
     return this
   }
 
-  grass(value: any) {
+  grass(value: string): void {
     if (!arguments.length) {
       return this.style.toSheet()
     }
     this.style.importGrass(value)
-    return this
   }
 
-  update() {
-    this.viz.update()
-    return this
+  update(options: {
+    updateNodes: boolean
+    updateRelationships: boolean
+    precompute?: boolean
+  }): void {
+    this.viz.update(options)
   }
 
-  resize() {
+  resize(): void {
     this.viz.resize()
-    return this
   }
 
   boundingBox() {
     return this.viz.boundingBox()
-  }
-
-  collectStats() {
-    return this.viz.collectStats()
   }
 
   zoomIn(elem: any) {

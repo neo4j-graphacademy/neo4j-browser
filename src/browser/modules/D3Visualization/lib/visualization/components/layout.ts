@@ -17,105 +17,124 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import d3 from 'd3'
-import collision from './collision'
-import circularLayout from '../utils/circularLayout'
+import {
+  Simulation,
+  forceCenter,
+  forceCollide,
+  forceLink,
+  forceManyBody,
+  forceSimulation,
+  forceX,
+  forceY
+} from 'd3-force'
+
 import cloneArray from '../utils/arrays'
+import circularLayout from '../utils/circularLayout'
+import Graph from './Graph'
+import Relationship from './Relationship'
+import VizNode from './VizNode'
 
-const layout = {
-  force: () => {
-    return {
-      init: (render: any) => {
-        const forceLayout: any = {}
+type ForceLayout = {
+  update: (
+    graph: Graph,
+    size: [number, number],
+    animate?: boolean
+  ) => Simulation<VizNode, Relationship>
+  simulation: Simulation<VizNode, Relationship>
+}
+export type Layout = { init: (render: () => void) => ForceLayout }
+export type AvailableLayouts = Record<'force', () => Layout>
 
-        const linkDistance = 45
-
-        const d3force = d3.layout
-          .force()
-          .linkDistance(
-            (relationship: any) =>
-              relationship.source.radius +
-              relationship.target.radius +
-              linkDistance
-          )
-          .charge(-1000)
-
-        const newStatsBucket = function() {
-          const bucket = {
-            layoutTime: 0,
-            layoutSteps: 0
-          }
-          return bucket
-        }
-
-        let currentStats = newStatsBucket()
-
-        forceLayout.collectStats = function() {
-          const latestStats = currentStats
-          currentStats = newStatsBucket()
-          return latestStats
-        }
-
-        const accelerateLayout = function() {
-          let maxStepsPerTick = 100
-          const maxAnimationFramesPerSecond = 60
-          const maxComputeTime = 1000 / maxAnimationFramesPerSecond
-          const now =
-            window.performance && window.performance.now
-              ? () => window.performance.now()
-              : () => Date.now()
-
-          const d3Tick = d3force.tick
-          return (d3force.tick = function() {
-            const startTick = now()
-            let step = maxStepsPerTick
-            while (step-- && now() - startTick < maxComputeTime) {
-              const startCalcs = now()
-              currentStats.layoutSteps++
-
-              collision.avoidOverlap(d3force.nodes())
-
-              if (d3Tick()) {
-                maxStepsPerTick = 2
-                return true
-              }
-              currentStats.layoutTime += now() - startCalcs
-            }
-            render()
-            return false
-          } as any)
-        }
-
-        accelerateLayout()
-
-        const oneRelationshipPerPairOfNodes = (graph: any) =>
-          Array.from(graph.groupedRelationships()).map(
-            (pair: any) => pair.relationships[0]
-          )
-
-        forceLayout.update = function(graph: any, size: any) {
-          const nodes = cloneArray(graph.nodes())
-          const relationships = oneRelationshipPerPairOfNodes(graph)
-
-          const radius = (nodes.length * linkDistance) / (Math.PI * 2)
-          const center = {
-            x: size[0] / 2,
-            y: size[1] / 2
-          }
-          circularLayout(nodes, center, radius)
-
-          return d3force
-            .nodes(nodes)
-            .links(relationships)
-            .size(size)
-            .start()
-        }
-
-        forceLayout.drag = d3force.drag
-        return forceLayout
-      }
-    }
+let simulationTimeout: null | number = null
+export const setSimulationTimeout = (
+  simulation: Simulation<VizNode, Relationship>
+) => {
+  simulationTimeout = setTimeout(() => simulation.stop(), 2000)
+}
+export const clearSimulationTimeout = () => {
+  if (simulationTimeout) {
+    clearTimeout(simulationTimeout)
+    simulationTimeout = null
   }
+}
+
+const SIMULATION_STARTING_TICKS = 800
+
+const layout: AvailableLayouts = {
+  force: () => ({
+    init: render => {
+      const linkDistance = 45
+
+      const oneRelationshipPerPairOfNodes = (graph: Graph) =>
+        Array.from(graph.groupedRelationships()).map(
+          pair => pair.relationships[0]
+        )
+
+      const simulation = forceSimulation<VizNode, Relationship>()
+        .force('charge', forceManyBody().strength(-400))
+        .on('tick', () => {
+          simulation.tick(10)
+          render()
+        })
+        .stop()
+
+      const update = function(
+        graph: Graph,
+        size: [number, number],
+        precompute = false
+      ) {
+        clearSimulationTimeout()
+        const nodes = cloneArray(graph.nodes())
+        const relationships = oneRelationshipPerPairOfNodes(graph)
+
+        const radius = (nodes.length * linkDistance) / (Math.PI * 2)
+        const center = {
+          x: size[0] / 2,
+          y: size[1] / 2
+        }
+        circularLayout(nodes, center, radius)
+
+        simulation
+          .nodes(nodes)
+          .force(
+            'collide',
+            forceCollide<VizNode>().radius(node => node.radius + 25)
+          )
+          .force(
+            'link',
+            forceLink<VizNode, Relationship>(relationships)
+              .id(node => node.id)
+              .distance(
+                relationship =>
+                  relationship.source.radius +
+                  relationship.target.radius +
+                  linkDistance
+              )
+          )
+          .force('center', forceCenter(center.x, center.y))
+          .force('centerX', forceX<VizNode>(center.x).strength(0.03))
+          .force('centerY', forceY<VizNode>(center.y).strength(0.03))
+
+        if (precompute) {
+          // Precompute the position of nodes instead of running the
+          // simulation with the animation and multiple re-renders
+          simulation.tick(SIMULATION_STARTING_TICKS)
+          render()
+        } else {
+          simulation
+            .alpha(1)
+            .alphaDecay(0.08)
+            .alphaTarget(0.3)
+            .restart()
+          setSimulationTimeout(simulation)
+        }
+
+        return simulation
+      }
+
+      return { update, simulation }
+    }
+  })
 }
 
 export default layout

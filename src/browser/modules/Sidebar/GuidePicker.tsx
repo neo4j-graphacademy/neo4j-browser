@@ -13,26 +13,33 @@ import {
   GuideListEntry,
   MarginBottomLi
 } from 'browser/documentation/sidebar-guides/styled'
-import { Guide } from 'shared/modules/guides/guidesDuck'
-import docs, { GuideChapter } from 'browser/documentation'
+import { RemoteGuide } from 'shared/modules/guides/guidesDuck'
+import docs, { BuiltInGuideIdentifier, Guide } from 'browser/documentation'
 import { BinIcon } from 'browser-components/icons/Icons'
 
 type GuidePickerProps = {
-  remoteGuides: Guide[]
+  remoteGuides: RemoteGuide[]
   setCurrentGuide: (guide: Guide) => void
-  updateRemoteGuides: (newList: Guide[]) => void
+  fetchRemoteGuide: (identifier: string) => void
+  updateRemoteGuides: (newList: RemoteGuide[]) => void
 }
 
-const builtInGuides: { name: GuideChapter; description: string }[] = [
-  { name: 'intro', description: 'Navigating Neo4j Browser' },
-  { name: 'concepts', description: 'Property graph model concepts' },
-  { name: 'cypher', description: 'Cypher basics - create, match, delete' },
+const builtInGuides: {
+  identifier: BuiltInGuideIdentifier
+  description: string
+}[] = [
+  { identifier: 'intro', description: 'Navigating Neo4j Browser' },
+  { identifier: 'concepts', description: 'Property graph model concepts' },
   {
-    name: 'movie-graph',
+    identifier: 'cypher',
+    description: 'Cypher basics - create, match, delete'
+  },
+  {
+    identifier: 'movie-graph',
     description: 'Queries and recommendations with Cypher - movie use case}'
   },
   {
-    name: 'northwind-graph',
+    identifier: 'northwind-graph',
     description: 'Translate and import relation data into graph'
   }
 ]
@@ -40,6 +47,7 @@ const builtInGuides: { name: GuideChapter; description: string }[] = [
 const GuidePicker = ({
   remoteGuides,
   setCurrentGuide,
+  fetchRemoteGuide,
   updateRemoteGuides
 }: GuidePickerProps): JSX.Element => (
   <BuiltInGuideSidebarSlide>
@@ -54,14 +62,19 @@ const GuidePicker = ({
       </DrawerSubHeader>
     </MarginTop>
     <NoBulletsUl>
-      {builtInGuides.map(({ name, description }) => (
+      {builtInGuides.map(({ identifier, description }) => (
         <MarginBottomLi
-          key={name}
+          data-testid={`builtInGuide${identifier}`}
+          key={identifier}
           onClick={() =>
-            setCurrentGuide({ ...docs.guide.chapters[name], currentSlide: 0 })
+            setCurrentGuide({
+              ...docs.guide.chapters[identifier],
+              identifier,
+              currentSlide: 0
+            })
           }
         >
-          <DrawerBrowserCommand>:guide {name}</DrawerBrowserCommand>
+          <DrawerBrowserCommand>:guide {identifier}</DrawerBrowserCommand>
           <MarginTop> {description} </MarginTop>
         </MarginBottomLi>
       ))}
@@ -69,20 +82,29 @@ const GuidePicker = ({
     {remoteGuides.length !== 0 && (
       <>
         <MarginTop pixels={25}>
-          <DrawerSubHeader as="div" /* prevents guide styling of h5*/>
+          <DrawerSubHeader
+            as="div" /* prevents guide styling of h5*/
+            data-testid="remoteGuidesTitle"
+          >
             Remote Guides
           </DrawerSubHeader>
         </MarginTop>
         <NoBulletsUl>
           {remoteGuides.map(guide => (
-            <GuideListEntry key={guide.title}>
-              <DrawerBrowserCommand onClick={() => setCurrentGuide(guide)}>
+            <GuideListEntry key={guide.identifier}>
+              <DrawerBrowserCommand
+                data-testid={`remoteGuide${guide.identifier}`}
+                onClick={() => fetchRemoteGuide(guide.identifier)}
+              >
                 {guide.title}
               </DrawerBrowserCommand>
               <Clickable
+                data-testid={`removeGuide${guide.identifier}`}
                 onClick={() => {
                   updateRemoteGuides(
-                    remoteGuides.filter(({ title }) => title !== guide.title)
+                    remoteGuides.filter(
+                      ({ identifier }) => identifier !== guide.identifier
+                    )
                   )
                 }}
               >

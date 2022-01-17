@@ -20,7 +20,7 @@
 
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import neoGraphStyle from '../graphStyle'
+import { GraphStyle, Selector } from '../graphStyle'
 import {
   StyledPickerSelector,
   StyledTokenRelationshipType,
@@ -34,7 +34,6 @@ import {
 } from './styled'
 import * as actions from 'shared/modules/grass/grassDuck'
 import { toKeyString } from 'shared/services/utils'
-import { GraphStyle } from './OverviewPane'
 import { GlobalState } from 'shared/globalState'
 import { Action, Dispatch } from 'redux'
 
@@ -44,17 +43,16 @@ type GrassEditorProps = {
   update?: any
   selectedLabel?: { label: string; propertyKeys: string[] }
   selectedRelType?: { relType: string; propertyKeys: string[] }
-  frameHeight: number
 }
 
 export class GrassEditorComponent extends Component<GrassEditorProps> {
-  graphStyle: any
+  graphStyle: GraphStyle
   nodeDisplaySizes: any
   picker: any
   widths: any
   constructor(props: any) {
     super(props)
-    this.graphStyle = neoGraphStyle()
+    this.graphStyle = new GraphStyle()
     if (this.props.graphStyleData) {
       this.graphStyle.loadRules(this.props.graphStyleData)
     }
@@ -66,23 +64,24 @@ export class GrassEditorComponent extends Component<GrassEditorProps> {
     }
   }
 
-  sizeLessThan(size1: any, size2: any) {
-    const size1Numerical = size1 ? size1.replace('px', '') + 0 : 0
-    const size2Numerical = size1 ? size2.replace('px', '') + 0 : 0
+  sizeLessThan(size1: string | undefined, size2: string | undefined): boolean {
+    const size1Numerical = size1 ? parseInt(size1.replace('px', '')) : 0
+    const size2Numerical = size2 ? parseInt(size2.replace('px', '')) : 0
     return size1Numerical <= size2Numerical
   }
 
-  updateStyle(selector: any, styleProp: any) {
+  updateStyle(selector: Selector, styleProp: any): void {
     this.graphStyle.changeForSelector(selector, styleProp)
     this.props.update(this.graphStyle.toSheet())
   }
 
   circleSelector(
+    type: 'color' | 'size',
     styleProps: any,
     styleProvider: any,
     activeProvider: any,
-    className: any,
-    selector: any,
+    className: string,
+    selector: Selector,
     textProvider = (_: any) => {
       return ''
     }
@@ -98,6 +97,7 @@ export class GrassEditorComponent extends Component<GrassEditorProps> {
         <StyledPickerListItem
           className={className}
           key={toKeyString('circle' + i)}
+          data-testid={`select-${type}-${i}`}
         >
           <StyledCircleSelector
             className={active ? 'active' : ''}
@@ -117,6 +117,7 @@ export class GrassEditorComponent extends Component<GrassEditorProps> {
         <StyledInlineList>
           <StyledInlineListItem>Color:</StyledInlineListItem>
           {this.circleSelector(
+            'color',
             this.graphStyle.defaultColors(),
             (color: any) => {
               return { backgroundColor: color.color }
@@ -132,12 +133,13 @@ export class GrassEditorComponent extends Component<GrassEditorProps> {
     )
   }
 
-  sizePicker(selector: any, styleForLabel: any) {
+  sizePicker(selector: Selector, styleForLabel: any) {
     return (
       <StyledInlineListItem key="size-picker">
         <StyledInlineList data-testid="size-picker">
           <StyledInlineListItem>Size:</StyledInlineListItem>
           {this.circleSelector(
+            'size',
             this.graphStyle.defaultSizes(),
             (_size: any, index: any) => {
               return {
@@ -159,7 +161,7 @@ export class GrassEditorComponent extends Component<GrassEditorProps> {
     )
   }
 
-  widthPicker(selector: any, styleForItem: any) {
+  widthPicker(selector: Selector, styleForItem: any) {
     const widthSelectors = this.graphStyle
       .defaultArrayWidths()
       .map((widthValue: any, i: any) => {
@@ -189,29 +191,8 @@ export class GrassEditorComponent extends Component<GrassEditorProps> {
     )
   }
 
-  iconPicker(selector: any) {
-    return (
-      <li key="icon-picker">
-        Icon:
-        <ul>
-          {this.picker(
-            this.graphStyle.defaultIconCodes(),
-            () => {
-              return { fontFamily: 'streamline' }
-            },
-            'icon-picker-item',
-            selector,
-            (iconCode: any) => {
-              return iconCode['icon-code']
-            }
-          )}
-        </ul>
-      </li>
-    )
-  }
-
   captionPicker(
-    selector: any,
+    selector: Selector,
     styleForItem: any,
     propertyKeys: any,
     showTypeSelector = false
@@ -309,7 +290,7 @@ export class GrassEditorComponent extends Component<GrassEditorProps> {
       return null
     }
     return (
-      <StyledInlineListStylePicker frameHeight={this.props.frameHeight}>
+      <StyledInlineListStylePicker>
         {title}
         {pickers}
       </StyledInlineListStylePicker>

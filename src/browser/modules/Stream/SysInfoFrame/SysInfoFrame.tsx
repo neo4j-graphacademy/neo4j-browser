@@ -22,12 +22,16 @@ import React, { Component, ReactNode } from 'react'
 import { connect } from 'react-redux'
 import { withBus } from 'react-suber'
 import { CYPHER_REQUEST } from 'shared/modules/cypher/cypherDuck'
-import { Database, isEnterprise } from 'shared/modules/dbMeta/dbMetaDuck'
+import {
+  isEnterprise,
+  Database,
+  getDatabases
+} from 'shared/modules/dbMeta/state'
 import {
   isConnected,
   getUseDb
 } from 'shared/modules/connections/connectionsDuck'
-import FrameTemplate from 'browser/modules/Frame/FrameTemplate'
+import FrameBodyTemplate from 'browser/modules/Frame/FrameBodyTemplate'
 import {
   StyledStatusBar,
   AutoRefreshToggle,
@@ -37,7 +41,6 @@ import {
 import { NEO4J_BROWSER_USER_ACTION_QUERY } from 'services/bolt/txMetadata'
 import { hasMultiDbSupport } from 'shared/modules/features/versionedFeatures'
 import { ErrorsView } from '../CypherFrame/ErrorsView'
-import { getDatabases } from 'shared/modules/dbMeta/dbMetaDuck'
 import * as legacyHelpers from './legacyHelpers'
 import * as helpers from './helpers'
 import { SysInfoTable } from './SysInfoTable'
@@ -70,6 +73,8 @@ type SysInfoFrameProps = {
   isConnected: boolean
   isEnterprise: boolean
   useDb: string | null
+  isFullscreen: boolean
+  isCollapsed: boolean
 }
 
 export class SysInfoFrame extends Component<
@@ -218,7 +223,6 @@ export class SysInfoFrame extends Component<
     } = this.state
     const {
       databases,
-      frame,
       isConnected,
       isEnterprise,
       hasMultiDbSupport
@@ -241,10 +245,11 @@ export class SysInfoFrame extends Component<
     )
 
     return (
-      <FrameTemplate
-        header={frame}
+      <FrameBodyTemplate
+        isCollapsed={this.props.isCollapsed}
+        isFullscreen={this.props.isFullscreen}
         contents={content}
-        statusbar={
+        statusBar={
           <StatusbarWrapper>
             <StyledStatusBar>
               {lastFetch && `Updated: ${new Date(lastFetch).toISOString()}`}
