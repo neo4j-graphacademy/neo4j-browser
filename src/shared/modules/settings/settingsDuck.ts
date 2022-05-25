@@ -130,7 +130,7 @@ export const initialState: SettingsState = {
   // @GraphAcademy - disable :play start on load
   // initCmd: ':play start',
   // playImplicitInitCommands: true,
-  initCmd: undefined,
+  initCmd: '',
   playImplicitInitCommands: false,
   initialNodeDisplay: 300,
   maxNeighbours: 100,

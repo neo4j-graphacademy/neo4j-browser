@@ -315,23 +315,24 @@ export const postConnectCmdEpic = (some$: any, store: any) =>
       .map(() => {
         const serverSettings = getAvailableSettings(store.getState())
         // @GraphAcademy - disable post connect cmd
-        if (
-          false &&
-          serverSettings &&
-          serverSettings['browser.post_connect_cmd']
-        ) {
-          const cmds = extractPostConnectCommandsFromServerConfig(
-            serverSettings['browser.post_connect_cmd']
-          )
-          const playImplicitInitCommands = getPlayImplicitInitCommands(
-            store.getState()
-          )
-          if (playImplicitInitCommands && cmds !== undefined) {
-            cmds.forEach((cmd: any) => {
-              store.dispatch(executeSystemCommand(`:${cmd}`))
-            })
-          }
-        }
+        /* if (
+           false &&
+           serverSettings &&
+           serverSettings['browser.post_connect_cmd']
+         ) {
+           const cmds = extractPostConnectCommandsFromServerConfig(
+             serverSettings['browser.post_connect_cmd']
+           )
+           const playImplicitInitCommands = getPlayImplicitInitCommands(
+             store.getState()
+           )
+           if (playImplicitInitCommands && cmds !== undefined) {
+             cmds?.forEach((cmd: any) => {
+               store.dispatch(executeSystemCommand(`:${cmd}`))
+             })
+           }
+         }
+        */
         return { type: 'NOOP' }
       })
       .take(1)
