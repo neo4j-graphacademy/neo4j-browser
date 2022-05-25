@@ -327,7 +327,7 @@ export const postConnectCmdEpic = (some$: any, store: any) =>
             store.getState()
           )
           if (playImplicitInitCommands && cmds !== undefined) {
-            cmds.forEach((cmd: any) => {
+            cmds?.forEach((cmd: any) => {
               store.dispatch(executeSystemCommand(`:${cmd}`))
             })
           }
