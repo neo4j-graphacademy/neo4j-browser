@@ -73,7 +73,8 @@ const Main = React.memo(function Main(props: MainProps) {
       <ErrorBoundary>
         <Editor />
       </ErrorBoundary>
-      {showUdcConsentBanner && (
+      {/* @GraphAcademy remove udc consent banner */}
+      {false && props.showUdcConsentBanner && (
         <UdcConsentBanner>
           <span>
             To help make Neo4j Browser better we collect information on product

@@ -22,6 +22,7 @@ import { Action } from 'redux'
 import { Epic } from 'redux-observable'
 import 'rxjs'
 
+import { trackQueryRequest } from '../graphacademy/graphacademyDuck'
 import bolt from 'services/bolt/bolt'
 import { BrowserError } from 'services/exceptions'
 import { GlobalState } from 'shared/globalState'
@@ -94,6 +95,8 @@ export default function reducer(
         status: action.status,
         updated: new Date().getTime()
       }
+      trackQueryRequest(newRequest)
+
       return {
         ...state,
         [action.id]: newRequest
