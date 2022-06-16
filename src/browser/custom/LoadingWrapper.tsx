@@ -48,7 +48,7 @@ function LoadingWrapper(props: Props) {
       {isLoading && (
         <div style={styles.wrapper}>
           <LoadingSpinner size="large" />
-          <div>Loading Neo4j Browser</div>
+          <div>Connecting to Sandbox</div>
         </div>
       )}
       <div>{props.children}</div>
