@@ -154,15 +154,17 @@ function scrubQueryParamsAndUrl(event: Sentry.Event): Sentry.Event {
 export function setupSentry(): void {
   if (process.env.NODE_ENV === 'production') {
     Sentry.init({
-      dsn: 'https://1ea9f7ebd51441cc95906afb2d31d841@o110884.ingest.sentry.io/1232865',
+      dsn:
+        'https://1ea9f7ebd51441cc95906afb2d31d841@o110884.ingest.sentry.io/1232865',
       release: `neo4j-browser@${version}`,
       integrations: [
         new Integrations.BrowserTracing(),
         new CaptureConsole({ levels: ['error'] })
       ],
       tracesSampler: context => {
-        const isPerformanceTransaction =
-          context.transactionContext.name.startsWith('performance')
+        const isPerformanceTransaction = context.transactionContext.name.startsWith(
+          'performance'
+        )
         if (isPerformanceTransaction) {
           // 1% of performance reports is enough to build stats, raise if needed
           return 0.01

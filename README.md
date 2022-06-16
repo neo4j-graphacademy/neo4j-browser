@@ -1,6 +1,6 @@
 # Neo4j Browser
 
-Neo4j Browser is the general purpose graphical user interface for Neo4j. Query, visualize, administrate and monitor the database with modern and easy-to-use tools.
+Neo4j Browser is the general purpose graphical user interface for Neo4j. Query, visualize, administer and monitor the database with modern and easy-to-use tools.
 
 ![neo4j browser screenshot](./.github/neo4j-browser-screenshot.png)
 

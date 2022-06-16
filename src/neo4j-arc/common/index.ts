@@ -19,7 +19,7 @@
  */
 export { deepEquals, mapObjectValues } from './utils/objectUtils'
 export { isMac } from './utils/platformUtils'
-export { extractNodesAndRels } from './utils/driverUtils'
+export { extractUniqueNodesAndRels } from './utils/driverUtils'
 export {
   getPropertyTypeDisplayName,
   propertyToString
@@ -40,6 +40,11 @@ export type {
   CypherMap,
   CypherProperty,
   CypherStructuralType
+} from './types/cypherDataTypes'
+
+export {
+  isCypherTemporalType,
+  isCypherBasicPropertyType
 } from './types/cypherDataTypes'
 
 export { ClickableUrls } from './components/ClickableUrls'

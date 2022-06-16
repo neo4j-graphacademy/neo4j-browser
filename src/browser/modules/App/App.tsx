@@ -96,6 +96,7 @@ import {
   updateUdcData
 } from 'shared/modules/udc/udcDuck'
 import { getTelemetrySettings } from 'shared/utils/selectors'
+import LoadingWrapper from 'browser/custom/LoadingWrapper'
 
 export const MAIN_WRAPPER_DOM_ID = 'MAIN_WRAPPER_DOM_ID'
 
@@ -180,115 +181,121 @@ export function App(props: any) {
 
   return (
     <ErrorBoundary>
-      <DesktopApi
-        onMount={(...args: any[]) => {
-          const { allowSendStats, allowSendReports, trackingId } = args[1]
-            ?.global?.settings || {
-            allowSendReports: false,
-            allowSendStats: false
-          }
-          updateDesktopUDCSettings({
-            allowCrashReportsInDesktop: allowSendReports,
-            allowUserStatsInDesktop: allowSendStats,
-            desktopTrackingId: trackingId
-          })
+      <LoadingWrapper>
+        <DesktopApi
+          onMount={(...args: any[]) => {
+            const { allowSendStats, allowSendReports, trackingId } = args[1]
+              ?.global?.settings || {
+              allowSendReports: false,
+              allowSendStats: false
+            }
+            updateDesktopUDCSettings({
+              allowCrashReportsInDesktop: allowSendReports,
+              allowUserStatsInDesktop: allowSendStats,
+              desktopTrackingId: trackingId
+            })
 
-          buildConnectionCreds(...args, { defaultConnectionData })
-            .then(creds => bus.send(INJECTED_DISCOVERY, creds))
-            .catch(() => bus.send(INITIAL_SWITCH_CONNECTION_FAILED))
+            buildConnectionCreds(...args, { defaultConnectionData })
+              .then(creds => bus.send(INJECTED_DISCOVERY, creds))
+              .catch(() => bus.send(INITIAL_SWITCH_CONNECTION_FAILED))
 
-          getDesktopTheme(...args)
-            .then(theme => setEnvironmentTheme(theme))
-            .catch(setEnvironmentTheme(null))
-        }}
-        onGraphActive={(...args: any[]) => {
-          buildConnectionCreds(...args, { defaultConnectionData })
-            .then(creds => bus.send(SWITCH_CONNECTION, creds))
-            .catch(() => bus.send(SWITCH_CONNECTION_FAILED))
-        }}
-        onGraphInactive={() => bus.send(SILENT_DISCONNECT)}
-        onColorSchemeUpdated={(...args: any[]) =>
-          getDesktopTheme(...args)
-            .then(theme => setEnvironmentTheme(theme))
-            .catch(setEnvironmentTheme(null))
-        }
-        onArgumentsChange={(argsString: any) => {
-          bus.send(URL_ARGUMENTS_CHANGE, { url: `?${argsString}` })
-        }}
-        onApplicationSettingsSaved={(...args: any[]) => {
-          const { allowSendStats, allowSendReports, trackingId } = args[1]
-            ?.global?.settings || {
-            allowSendReports: false,
-            allowSendStats: false
+            getDesktopTheme(...args)
+              .then(theme => setEnvironmentTheme(theme))
+              .catch(setEnvironmentTheme(null))
+          }}
+          onGraphActive={(...args: any[]) => {
+            buildConnectionCreds(...args, { defaultConnectionData })
+              .then(creds => bus.send(SWITCH_CONNECTION, creds))
+              .catch(() => bus.send(SWITCH_CONNECTION_FAILED))
+          }}
+          onGraphInactive={() => bus.send(SILENT_DISCONNECT)}
+          onColorSchemeUpdated={(...args: any[]) =>
+            getDesktopTheme(...args)
+              .then(theme => setEnvironmentTheme(theme))
+              .catch(setEnvironmentTheme(null))
           }
-          updateDesktopUDCSettings({
-            allowCrashReportsInDesktop: allowSendReports,
-            allowUserStatsInDesktop: allowSendStats,
-            desktopTrackingId: trackingId
-          })
-        }}
-        setEventMetricsCallback={(fn: any) =>
-          (eventMetricsCallback.current = fn)
-        }
-      />
-      <PerformanceOverlay />
-      <ThemeProvider theme={themeData}>
-        <FeatureToggleProvider features={experimentalFeatures}>
-          <FileDrop store={store}>
-            <StyledWrapper className={wrapperClassNames}>
-              <DocTitle titleString={titleString} />
-              <UserInteraction />
-              {loadExternalScripts && (
-                <>
-                  <Segment
-                    segmentKey={SEGMENT_KEY}
-                    setTrackCallback={(fn: any) =>
-                      (segmentTrackCallback.current = fn)
-                    }
+          onArgumentsChange={(argsString: any) => {
+            bus.send(URL_ARGUMENTS_CHANGE, { url: `?${argsString}` })
+          }}
+          onApplicationSettingsSaved={(...args: any[]) => {
+            const { allowSendStats, allowSendReports, trackingId } = args[1]
+              ?.global?.settings || {
+              allowSendReports: false,
+              allowSendStats: false
+            }
+            updateDesktopUDCSettings({
+              allowCrashReportsInDesktop: allowSendReports,
+              allowUserStatsInDesktop: allowSendStats,
+              desktopTrackingId: trackingId
+            })
+          }}
+          setEventMetricsCallback={(fn: any) =>
+            (eventMetricsCallback.current = fn)
+          }
+        />
+        <PerformanceOverlay />
+        <ThemeProvider theme={themeData}>
+          <FeatureToggleProvider features={experimentalFeatures}>
+            <FileDrop store={store}>
+              <StyledWrapper className={wrapperClassNames}>
+                <DocTitle titleString={titleString} />
+                <UserInteraction />
+                {loadExternalScripts && (
+                  <>
+                    <Segment
+                      segmentKey={SEGMENT_KEY}
+                      setTrackCallback={(fn: any) =>
+                        (segmentTrackCallback.current = fn)
+                      }
+                    />
+                    <CannyLoader />
+                  </>
+                )}
+                {syncConsent && loadExternalScripts && loadSync && (
+                  <BrowserSyncInit
+                    authStatus={browserSyncAuthStatus}
+                    authData={browserSyncMetadata}
+                    config={browserSyncConfig}
                   />
-                  <CannyLoader />
-                </>
-              )}
-              {syncConsent && loadExternalScripts && loadSync && (
-                <BrowserSyncInit
-                  authStatus={browserSyncAuthStatus}
-                  authData={browserSyncMetadata}
-                  config={browserSyncConfig}
-                />
-              )}
-              <StyledApp>
-                <StyledBody>
-                  {/* @GraphAcademy - remove sidebar */}
-                  {/* <ErrorBoundary>
+                )}
+                <StyledApp>
+                  <StyledBody>
+                    {/* @GraphAcademy - remove sidebar */}
+                    {/* <ErrorBoundary>
                     <Sidebar
                       selectedDrawerName={drawer}
                       onNavClick={handleNavClick}
                     />
                   </ErrorBoundary> */}
-                  <StyledMainWrapper id={MAIN_WRAPPER_DOM_ID}>
-                    <Main
-                      connectionState={connectionState}
-                      lastConnectionUpdate={lastConnectionUpdate}
-                      errorMessage={errorMessage}
-                      useDb={useDb}
-                      isDatabaseUnavailable={isDatabaseUnavailable}
-                      showUdcConsentBanner={
-                        telemetrySettings.source === 'BROWSER_SETTING' &&
-                        consentBannerShownCount <= 5
-                      }
-                      dismissConsentBanner={() => setConsentBannerShownCount(6)}
-                      incrementConsentBannerShownCount={() =>
-                        setConsentBannerShownCount(consentBannerShownCount + 1)
-                      }
-                      openSettingsDrawer={openSettingsDrawer}
-                    />
-                  </StyledMainWrapper>
-                </StyledBody>
-              </StyledApp>
-            </StyledWrapper>
-          </FileDrop>
-        </FeatureToggleProvider>
-      </ThemeProvider>
+                    <StyledMainWrapper id={MAIN_WRAPPER_DOM_ID}>
+                      <Main
+                        connectionState={connectionState}
+                        lastConnectionUpdate={lastConnectionUpdate}
+                        errorMessage={errorMessage}
+                        useDb={useDb}
+                        isDatabaseUnavailable={isDatabaseUnavailable}
+                        showUdcConsentBanner={
+                          telemetrySettings.source === 'BROWSER_SETTING' &&
+                          consentBannerShownCount <= 5
+                        }
+                        dismissConsentBanner={() =>
+                          setConsentBannerShownCount(6)
+                        }
+                        incrementConsentBannerShownCount={() =>
+                          setConsentBannerShownCount(
+                            consentBannerShownCount + 1
+                          )
+                        }
+                        openSettingsDrawer={openSettingsDrawer}
+                      />
+                    </StyledMainWrapper>
+                  </StyledBody>
+                </StyledApp>
+              </StyledWrapper>
+            </FileDrop>
+          </FeatureToggleProvider>
+        </ThemeProvider>
+      </LoadingWrapper>
     </ErrorBoundary>
   )
 }
