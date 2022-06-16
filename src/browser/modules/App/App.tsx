@@ -257,45 +257,49 @@ export function App(props: any) {
                     authData={browserSyncMetadata}
                     config={browserSyncConfig}
                   />
-                )}
-                <StyledApp>
-                  <StyledBody>
-                    {/* @GraphAcademy - remove sidebar */}
-                    {/* <ErrorBoundary>
+                  <CannyLoader />
+                </>
+              )}
+              {syncConsent && loadExternalScripts && loadSync && (
+                <BrowserSyncInit
+                  authStatus={browserSyncAuthStatus}
+                  authData={browserSyncMetadata}
+                  config={browserSyncConfig}
+                />
+              )}
+              <StyledApp>
+                <StyledBody>
+                  {/* @GraphAcademy - remove sidebar */}
+                  {/* <ErrorBoundary>
                     <Sidebar
                       selectedDrawerName={drawer}
                       onNavClick={handleNavClick}
                     />
                   </ErrorBoundary> */}
-                    <StyledMainWrapper id={MAIN_WRAPPER_DOM_ID}>
-                      <Main
-                        connectionState={connectionState}
-                        lastConnectionUpdate={lastConnectionUpdate}
-                        errorMessage={errorMessage}
-                        useDb={useDb}
-                        isDatabaseUnavailable={isDatabaseUnavailable}
-                        showUdcConsentBanner={
-                          telemetrySettings.source === 'BROWSER_SETTING' &&
-                          consentBannerShownCount <= 5
-                        }
-                        dismissConsentBanner={() =>
-                          setConsentBannerShownCount(6)
-                        }
-                        incrementConsentBannerShownCount={() =>
-                          setConsentBannerShownCount(
-                            consentBannerShownCount + 1
-                          )
-                        }
-                        openSettingsDrawer={openSettingsDrawer}
-                      />
-                    </StyledMainWrapper>
-                  </StyledBody>
-                </StyledApp>
-              </StyledWrapper>
-            </FileDrop>
-          </FeatureToggleProvider>
-        </ThemeProvider>
-      </LoadingWrapper>
+                  <StyledMainWrapper id={MAIN_WRAPPER_DOM_ID}>
+                    <Main
+                      connectionState={connectionState}
+                      lastConnectionUpdate={lastConnectionUpdate}
+                      errorMessage={errorMessage}
+                      useDb={useDb}
+                      isDatabaseUnavailable={isDatabaseUnavailable}
+                      showUdcConsentBanner={
+                        telemetrySettings.source === 'BROWSER_SETTING' &&
+                        consentBannerShownCount <= 5
+                      }
+                      dismissConsentBanner={() => setConsentBannerShownCount(6)}
+                      incrementConsentBannerShownCount={() =>
+                        setConsentBannerShownCount(consentBannerShownCount + 1)
+                      }
+                      openSettingsDrawer={openSettingsDrawer}
+                    />
+                  </StyledMainWrapper>
+                </StyledBody>
+              </StyledApp>
+            </StyledWrapper>
+          </FileDrop>
+        </FeatureToggleProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   )
 }
