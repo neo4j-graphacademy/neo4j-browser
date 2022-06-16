@@ -17,15 +17,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import { QueryResult } from 'neo4j-driver'
 import { Action } from 'redux'
 import { Epic } from 'redux-observable'
 import 'rxjs'
+
+import { trackQueryRequest } from '../graphacademy/graphacademyDuck'
 import bolt from 'services/bolt/bolt'
 import { BrowserError } from 'services/exceptions'
 import { GlobalState } from 'shared/globalState'
-import { AppStartAction, APP_START } from 'shared/modules/app/appDuck'
+import { APP_START, AppStartAction } from 'shared/modules/app/appDuck'
 
 export const NAME = 'requests'
 export const REQUEST_SENT = 'requests/SENT'
@@ -94,6 +95,8 @@ export default function reducer(
         status: action.status,
         updated: new Date().getTime()
       }
+      trackQueryRequest(newRequest)
+
       return {
         ...state,
         [action.id]: newRequest
