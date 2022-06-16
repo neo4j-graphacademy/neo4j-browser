@@ -19,7 +19,7 @@ const styles = {
     left: 0,
     width: '100%',
     height: '100vh',
-    backgroundColor: '#fafafa',
+    backgroundColor: '#E3ECF5',
     zIndex: 9,
     display: 'flex',
     flexDirection: 'column',
