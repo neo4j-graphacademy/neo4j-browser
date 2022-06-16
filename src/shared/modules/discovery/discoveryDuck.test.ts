@@ -17,16 +17,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+import nock from 'nock'
 import configureMockStore, { MockStoreEnhanced } from 'redux-mock-store'
 import { createEpicMiddleware } from 'redux-observable'
 import { createBus, createReduxMiddleware } from 'suber'
-import nock from 'nock'
 
-import * as discovery from './discoveryDuck'
 import * as connections from '../connections/connectionsDuck'
-import { APP_START, WEB, CLOUD } from 'shared/modules/app/appDuck'
+import * as discovery from './discoveryDuck'
 import { getDiscoveryEndpoint } from 'services/bolt/boltHelpers'
+import { APP_START, CLOUD, WEB } from 'shared/modules/app/appDuck'
 
 describe('discoveryOnStartupEpic', () => {
   let store: MockStoreEnhanced<unknown, unknown>
@@ -80,9 +79,7 @@ describe('discoveryOnStartupEpic', () => {
   test('listens on APP_START and tries to find a bolt host and sets it to default when fail on server error', done => {
     // Given
     const action = { type: APP_START }
-    nock(getDiscoveryEndpoint())
-      .get('/')
-      .reply(500)
+    nock(getDiscoveryEndpoint()).get('/').reply(500)
 
     bus.take(discovery.DONE, () => {
       // Then
@@ -107,9 +104,7 @@ describe('discoveryOnStartupEpic', () => {
     // Given
     const action = { type: APP_START, env: WEB }
     const expectedHost = 'bolt://myhost:7777'
-    nock(getDiscoveryEndpoint())
-      .get('/')
-      .reply(200, { bolt: expectedHost })
+    nock(getDiscoveryEndpoint()).get('/').reply(200, { bolt: expectedHost })
     bus.take(discovery.DONE, () => {
       // Then
       expect(store.getActions()).toEqual([
@@ -190,13 +185,11 @@ describe('discoveryOnStartupEpic', () => {
     // Given
     const action = { type: APP_START, env: WEB }
     const expectedHost = 'neo4j://myhost:7777'
-    nock(getDiscoveryEndpoint())
-      .get('/')
-      .reply(200, {
-        bolt_routing: expectedHost,
-        bolt_direct: 'bolt://myhost:666',
-        bolt: 'very://bad:1337'
-      })
+    nock(getDiscoveryEndpoint()).get('/').reply(200, {
+      bolt_routing: expectedHost,
+      bolt_direct: 'bolt://myhost:666',
+      bolt: 'very://bad:1337'
+    })
     bus.take(discovery.DONE, () => {
       // Then
       expect(store.getActions()).toEqual([
@@ -235,7 +228,7 @@ describe('discoveryOnStartupEpic', () => {
             host: expectedHost,
             SSOError: discovery.NO_SSO_PROVIDERS_ERROR_TEXT,
             SSOProviders: [],
-            hasForceURL: true,
+            hasForceUrl: true,
             supportsMultiDb: false
           }
         }
@@ -265,7 +258,7 @@ describe('discoveryOnStartupEpic', () => {
             SSOError: discovery.NO_SSO_PROVIDERS_ERROR_TEXT,
             SSOProviders: [],
             supportsMultiDb: false,
-            hasForceURL: true
+            hasForceUrl: true
           }
         }
       ])
@@ -292,7 +285,7 @@ describe('discoveryOnStartupEpic', () => {
           discovered: {
             host: expectedHost,
             requestedUseDb: 'test',
-            hasForceURL: true,
+            hasForceUrl: true,
             supportsMultiDb: true,
             SSOError: discovery.NO_SSO_PROVIDERS_ERROR_TEXT,
             SSOProviders: []
@@ -324,7 +317,7 @@ describe('discoveryOnStartupEpic', () => {
             SSOError: discovery.NO_SSO_PROVIDERS_ERROR_TEXT,
             SSOProviders: [],
             supportsMultiDb: false,
-            hasForceURL: true
+            hasForceUrl: true
           }
         }
       ])
@@ -339,8 +332,7 @@ describe('discoveryOnStartupEpic', () => {
     // Given
     const action = {
       type: APP_START,
-      url:
-        'http://localhost/?connectURL=bolt%2Brouting%3A%2F%2Fneo4j%3Aneo4j%40myhost%3A8889'
+      url: 'http://localhost/?connectURL=bolt%2Brouting%3A%2F%2Fneo4j%3Aneo4j%40myhost%3A8889'
     }
     const expectedHost = 'neo4j://myhost:8889'
     bus.take(discovery.DONE, () => {
@@ -355,7 +347,7 @@ describe('discoveryOnStartupEpic', () => {
             SSOError: discovery.NO_SSO_PROVIDERS_ERROR_TEXT,
             SSOProviders: [],
             supportsMultiDb: false,
-            hasForceURL: true
+            hasForceUrl: true
           }
         }
       ])
@@ -393,9 +385,7 @@ describe('discoveryOnStartupEpic cloud env', () => {
     // Given
     const expectedHost = 'neo4j+s://myhost.neo4j.io:7777'
     const action = { type: APP_START, env: CLOUD }
-    nock(getDiscoveryEndpoint())
-      .get('/')
-      .reply(200, { bolt: expectedHost })
+    nock(getDiscoveryEndpoint()).get('/').reply(200, { bolt: expectedHost })
     bus.take(discovery.DONE, () => {
       // Then
       expect(store.getActions()).toEqual([

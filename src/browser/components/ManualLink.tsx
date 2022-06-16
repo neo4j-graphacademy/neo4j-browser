@@ -17,14 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-import { formatDocVersion } from 'browser/modules/Sidebar/docsUtils'
 import React from 'react'
 import { connect } from 'react-redux'
 import semver from 'semver'
 
-import { getVersion } from 'shared/modules/dbMeta/dbMetaDuck'
 import { DrawerExternalLink } from './drawer/drawer-styled'
+import { formatDocVersion } from 'browser/modules/Sidebar/docsUtils'
+import { GlobalState } from 'project-root/src/shared/globalState'
+import { getVersion } from 'shared/modules/dbMeta/state'
 
 const movedPages: { [key: string]: { oldPage: string; oldContent: string } } = {
   '/administration/indexes-for-search-performance/': {
@@ -41,19 +41,30 @@ const movedPages: { [key: string]: { oldPage: string; oldContent: string } } = {
   }
 }
 
-const isPageMoved = (chapter: string, page: string, neo4jVersion: string) =>
+const isPageMoved = (
+  chapter: string,
+  page: string,
+  neo4jVersion: string | null
+) =>
   chapter === 'cypher-manual' &&
   movedPages[page] &&
   neo4jVersion &&
   semver.satisfies(neo4jVersion, '<4.0.0-alpha.1')
 
+export type ManualLinkProps = {
+  chapter: string
+  page: string
+  children: React.ReactNode
+  minVersion?: string | null
+  neo4jVersion: string | null
+}
 export function ManualLink({
   chapter,
   page,
   children,
   neo4jVersion,
-  minVersion
-}: any): JSX.Element {
+  minVersion = null
+}: ManualLinkProps): JSX.Element {
   let cleanPage = page.replace(/^\//, '')
   let content = children
   if (isPageMoved(chapter, page, neo4jVersion)) {
@@ -74,7 +85,7 @@ export function ManualLink({
   return <DrawerExternalLink href={url}>{content}</DrawerExternalLink>
 }
 
-const mapStateToProps = (state: any) => ({
+const mapStateToProps = (state: GlobalState) => ({
   neo4jVersion: getVersion(state)
 })
 

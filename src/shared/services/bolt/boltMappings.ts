@@ -17,18 +17,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-import updateStatsFields from './updateStatisticsFields'
 import { flatten, map, take } from 'lodash-es'
 import neo4j from 'neo4j-driver'
-import { stringModifier } from 'services/bolt/cypherTypesFormatting'
+
+import { upperFirst, BasicNodesAndRels } from 'neo4j-arc/common'
+
 import {
-  safelyRemoveObjectProp,
-  safelyAddObjectProp,
   escapeReservedProps,
-  unEscapeReservedProps,
-  upperFirst
+  safelyAddObjectProp,
+  safelyRemoveObjectProp,
+  unEscapeReservedProps
 } from '../utils'
+import updateStatsFields from './updateStatisticsFields'
+import { stringModifier } from 'services/bolt/cypherTypesFormatting'
 
 export const reservedTypePropertyName = 'transport-class'
 
@@ -160,7 +161,7 @@ const transformPlanArguments = (args: any) => {
   return res
 }
 
-const collectHits = function(operator: any) {
+const collectHits = function (operator: any) {
   let hits = operator.DbHits || 0
   if (operator.children) {
     hits = operator.children.reduce((acc: any, subOperator: any) => {
@@ -215,6 +216,10 @@ const getTypeDisplayName = (val: any): string => {
     return `Array(${val.length})`
   }
 
+  if (val === null) {
+    return 'null'
+  }
+
   return getDriverTypeName(val) || 'Unknown'
 }
 
@@ -224,7 +229,7 @@ export function extractNodesAndRelationshipsFromRecordsForOldVis(
   filterRels: any,
   converters: Converters,
   maxFieldItems?: any
-) {
+): BasicNodesAndRels {
   if (records.length === 0) {
     return { nodes: [], relationships: [] }
   }

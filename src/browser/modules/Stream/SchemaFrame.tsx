@@ -17,29 +17,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+import { replace, toUpper } from 'lodash-es'
 import React, { Component } from 'react'
-import { v4 } from 'uuid'
 import { connect } from 'react-redux'
 import { withBus } from 'react-suber'
-import { replace, toUpper } from 'lodash-es'
 import semver from 'semver'
+import { v4 } from 'uuid'
 
-import { getVersion } from 'shared/modules/dbMeta/dbMetaDuck'
-import { CYPHER_REQUEST } from 'shared/modules/cypher/cypherDuck'
-import FrameTemplate from '../Frame/FrameTemplate'
 import Slide from '../Carousel/Slide'
+import FrameBodyTemplate from '../Frame/FrameBodyTemplate'
 import {
-  StyledTable,
-  StyledTh,
   StyledBodyTr,
-  StyledTd
+  StyledTable,
+  StyledTd,
+  StyledTh
 } from 'browser-components/DataTables'
 import Directives from 'browser-components/Directives'
+import { GlobalState } from 'project-root/src/shared/globalState'
 import { NEO4J_BROWSER_USER_ACTION_QUERY } from 'services/bolt/txMetadata'
+import { CYPHER_REQUEST } from 'shared/modules/cypher/cypherDuck'
+import { getVersion } from 'shared/modules/dbMeta/state'
 
-const Indexes = ({ indexes, neo4jVersion }: any) => {
+type IndexesProps = {
+  indexes: any
+  neo4jVersion: string | null
+}
+const Indexes = ({ indexes, neo4jVersion }: IndexesProps) => {
   if (
+    !neo4jVersion ||
     !semver.valid(neo4jVersion) ||
     semver.satisfies(neo4jVersion, '<4.0.0-rc01')
   ) {
@@ -231,11 +236,15 @@ export class SchemaFrame extends Component<any, SchemaFrameState> {
 
 const Frame = (props: any) => {
   return (
-    <FrameTemplate header={props.frame} contents={<SchemaFrame {...props} />} />
+    <FrameBodyTemplate
+      isCollapsed={props.isCollapsed}
+      isFullscreen={props.isFullscreen}
+      contents={<SchemaFrame {...props} />}
+    />
   )
 }
 
-const mapStateToProps = (state: any) => ({
+const mapStateToProps = (state: GlobalState) => ({
   neo4jVersion: getVersion(state)
 })
 

@@ -17,21 +17,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import React, { Component, TransitionEvent } from 'react'
+
 import {
-  StyledNavigationButton,
-  NavigationButtonContainer,
-  StyledCannyBadgeAnchor
-} from 'browser-components/buttons'
-import { cannyOptions } from 'browser-services/canny'
-import {
-  StyledSidebar,
+  StyledBottomNav,
   StyledDrawer,
+  StyledSidebar,
   StyledTabsWrapper,
-  StyledTopNav,
-  StyledBottomNav
+  StyledTopNav
 } from './styled'
+import {
+  NavigationButtonContainer,
+  StyledCannyBadgeAnchor,
+  StyledNavigationButton
+} from 'browser-components/buttons'
 import { GUIDE_DRAWER_ID } from 'shared/modules/sidebar/sidebarDuck'
 
 export const LARGE_DRAWER_WIDTH = 500
@@ -71,16 +70,6 @@ class Navigation extends Component<NavigationProps, NavigationState> {
   state: NavigationState = {
     transitionState: this.props.selectedDrawerName ? Open : Closed,
     closingDrawerName: null
-  }
-
-  componentDidMount(): void {
-    window.Canny && window.Canny('initChangelog', cannyOptions)
-  }
-
-  componentWillUnmount(): void {
-    if (window.Canny) {
-      window.Canny('closeChangelog')
-    }
   }
 
   componentDidUpdate(
@@ -143,11 +132,14 @@ class Navigation extends Component<NavigationProps, NavigationState> {
         return (
           <div key={item.name}>
             {item.enableCannyBadge ? (
-              <StyledCannyBadgeAnchor data-canny-changelog />
+              <StyledCannyBadgeAnchor
+                data-testid={`navigationCanny${item.name}`}
+                data-canny-changelog
+              />
             ) : null}
             <NavigationButtonContainer
               title={item.title}
-              data-testid={'drawer' + item.name}
+              data-testid={`navigation${item.name}`}
               onClick={() => onNavClick(item.name.toLowerCase())}
               isOpen={isOpen}
             >

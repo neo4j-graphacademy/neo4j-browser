@@ -17,55 +17,59 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-import React, { Dispatch, useRef } from 'react'
-import { Action } from 'redux'
+import React, { useRef } from 'react'
 import { connect } from 'react-redux'
+import { Action, Dispatch } from 'redux'
 
+import { BackIcon } from 'browser-components/icons/LegacyIcons'
+
+import GuideCarousel from '../GuideCarousel/GuideCarousel'
+import GuidePicker from './GuidePicker'
 import {
+  BackIconContainer,
+  GuideTitle,
+  StyledDrawerSeparator,
+  StyledGuideDrawer,
+  StyledGuideDrawerHeader
+} from './styled'
+import { Guide } from 'browser/documentation'
+import { GlobalState } from 'shared/globalState'
+import {
+  RemoteGuide,
+  fetchRemoteGuide,
   getCurrentGuide,
-  Guide,
-  gotoSlide,
   getRemoteGuides,
+  gotoSlide,
   resetGuide,
   setCurrentGuide,
   updateRemoteGuides
 } from 'shared/modules/guides/guidesDuck'
-import { GlobalState } from 'shared/globalState'
-import GuideCarousel from '../GuideCarousel/GuideCarousel'
-import { BackIcon } from '../../components/icons/Icons'
-import {
-  StyledGuideDrawer,
-  GuideTitle,
-  BackIconContainer,
-  StyledGuideDrawerHeader,
-  StyledDrawerSeparator
-} from './styled'
-import GuidePicker from './GuidePicker'
 
-type GuideDrawerProps = {
+export type GuideDrawerProps = {
   currentGuide: Guide | null
+  remoteGuides: RemoteGuide[]
   backToAllGuides: () => void
   gotoSlide: (slideIndex: number) => void
-  remoteGuides: Guide[]
   setCurrentGuide: (guide: Guide) => void
-  updateRemoteGuides: (newList: Guide[]) => void
+  fetchRemoteGuide: (identifier: string) => void
+  updateRemoteGuides: (newList: RemoteGuide[]) => void
 }
 
-function GuideDrawer({
+export const GuideDrawer = ({
   currentGuide,
+  remoteGuides,
   backToAllGuides,
   gotoSlide,
-  remoteGuides,
   setCurrentGuide,
+  fetchRemoteGuide,
   updateRemoteGuides
-}: GuideDrawerProps): JSX.Element {
+}: GuideDrawerProps): JSX.Element => {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   return (
     <StyledGuideDrawer
       id="guide-drawer"
-      data-testid="guideDrawer"
+      data-testid="guidesDrawer"
       ref={scrollRef}
     >
       <StyledGuideDrawerHeader onClick={backToAllGuides}>
@@ -81,6 +85,7 @@ function GuideDrawer({
         <GuidePicker
           remoteGuides={remoteGuides}
           setCurrentGuide={setCurrentGuide}
+          fetchRemoteGuide={fetchRemoteGuide}
           updateRemoteGuides={updateRemoteGuides}
         />
       ) : (
@@ -110,7 +115,9 @@ const mapDispatchToProps = (dispatch: Dispatch<Action>) => ({
   backToAllGuides: () => dispatch(resetGuide()),
   gotoSlide: (slideIndex: number) => dispatch(gotoSlide(slideIndex)),
   setCurrentGuide: (guide: Guide) => dispatch(setCurrentGuide(guide)),
-  updateRemoteGuides: (updatedList: Guide[]) =>
+  fetchRemoteGuide: (identifier: string) =>
+    dispatch(fetchRemoteGuide(identifier)),
+  updateRemoteGuides: (updatedList: RemoteGuide[]) =>
     dispatch(updateRemoteGuides(updatedList))
 })
 const ConnectedGuideDrawer = connect(

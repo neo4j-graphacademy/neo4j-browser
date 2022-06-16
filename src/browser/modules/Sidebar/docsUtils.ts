@@ -17,10 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import semver from 'semver'
-export const formatDocVersion = (v = ''): string => {
-  if (!semver.valid(v)) {
+
+export const formatDocVersion = (v: string | null = ''): string => {
+  if (!v || !semver.valid(v)) {
     // All non-strings return
     return 'current'
   }

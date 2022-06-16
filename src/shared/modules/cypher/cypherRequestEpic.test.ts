@@ -17,28 +17,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import configureMockStore from 'redux-mock-store'
 import { createEpicMiddleware } from 'redux-observable'
 import { createBus, createReduxMiddleware } from 'suber'
 
-import { cypherRequestEpic, CYPHER_REQUEST } from './cypherDuck'
+import { CYPHER_REQUEST, cypherRequestEpic } from './cypherDuck'
 import {
   NEO4J_BROWSER_USER_QUERY,
   getUserDirectTxMetadata
 } from 'services/bolt/txMetadata'
 
 jest.mock('services/bolt/bolt', () => {
-  const orig = require.requireActual('services/bolt/bolt')
+  const orig = jest.requireActual('services/bolt/bolt')
   return {
     ...orig,
     directTransaction: jest.fn(() => Promise.resolve({ records: [] }))
   }
 })
-const bolt = require.requireMock('services/bolt/bolt')
+const bolt = jest.requireMock('services/bolt/bolt')
 
-jest.mock('shared/modules/dbMeta/dbMetaDuck')
-const dbMeta = require.requireMock('shared/modules/dbMeta/dbMetaDuck')
+jest.mock('shared/modules/dbMeta/state')
+const dbMeta = jest.requireMock('shared/modules/dbMeta/state')
 
 describe('cypherRequestEpic', () => {
   let store: any
@@ -50,7 +49,7 @@ describe('cypherRequestEpic', () => {
   ])
   beforeAll(() => {
     store = mockStore({
-      settings: { useCypherThread: false }
+      settings: {}
     })
   })
   afterEach(() => {
@@ -76,10 +75,7 @@ describe('cypherRequestEpic', () => {
           expect(bolt.directTransaction).toHaveBeenCalledWith(
             action.query,
             undefined,
-            {
-              useCypherThread: store.getState().settings.useCypherThread,
-              ...getUserDirectTxMetadata({ hasServerSupport: true })
-            }
+            getUserDirectTxMetadata({ hasServerSupport: true })
           )
           resolve()
         } catch (e) {
@@ -114,9 +110,7 @@ describe('cypherRequestEpic', () => {
           expect(bolt.directTransaction).toHaveBeenCalledWith(
             action.query,
             undefined,
-            {
-              useCypherThread: store.getState().settings.useCypherThread
-            }
+            {}
           )
           resolve()
         } catch (e) {
@@ -151,9 +145,7 @@ describe('cypherRequestEpic', () => {
           expect(bolt.directTransaction).toHaveBeenCalledWith(
             action.query,
             undefined,
-            {
-              useCypherThread: store.getState().settings.useCypherThread
-            }
+            {}
           )
           resolve()
         } catch (e) {

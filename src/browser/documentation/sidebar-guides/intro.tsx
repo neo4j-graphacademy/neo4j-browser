@@ -17,12 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import React from 'react'
+
+import { isMac } from 'neo4j-arc/common'
+
 import { BuiltInGuideSidebarSlide } from '../../modules/Carousel/Slide'
-import { isMac } from 'browser/modules/App/keyboardShortcuts'
 
 const title = 'Intro Guide'
+const identifier = 'intro'
 const slides = [
   <BuiltInGuideSidebarSlide key="s1">
     <h3>Navigating Neo4j Browser</h3>
@@ -38,7 +40,7 @@ const slides = [
       <li>
         Graph visualization of query results containing nodes and relationships.
       </li>
-      <li>Convenient exploration of the Neo4j's HTTP API (REST).</li>
+      <li>{`Convenient exploration of the Neo4j's HTTP API (REST).`}</li>
     </ul>
   </BuiltInGuideSidebarSlide>,
   <BuiltInGuideSidebarSlide key="s2">
@@ -216,4 +218,4 @@ const slides = [
   </BuiltInGuideSidebarSlide>
 ]
 
-export default { title, slides }
+export default { title, identifier, slides }

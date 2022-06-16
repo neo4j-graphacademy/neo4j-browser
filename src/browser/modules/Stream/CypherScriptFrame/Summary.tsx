@@ -18,20 +18,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import React from 'react'
+
+import { MessageArea, PaddedStatsBar } from './styled'
 import { getBodyAndStatusBarMessages } from 'browser/modules/Stream/CypherFrame/helpers'
 import { errorMessageFormater } from 'browser/modules/Stream/errorMessageFormater'
 import {
   StyledCypherErrorMessage,
-  StyledCypherWarningMessage,
+  StyledCypherInfoMessage,
   StyledCypherSuccessMessage,
-  StyledCypherInfoMessage
+  StyledCypherWarningMessage
 } from 'browser/modules/Stream/styled'
-import { MessageArea, PaddedStatsBar } from './styled'
+import { BrowserError } from 'services/exceptions'
+import { upperFirst } from 'neo4j-arc/common'
 import { allowlistedMultiCommands } from 'shared/modules/commands/commandsDuck'
 import { Status } from 'shared/modules/requests/requestsDuck'
 import { BrowserRequest } from 'shared/modules/requests/requestsDuck'
-import { BrowserError } from 'services/exceptions'
-import { upperFirst } from 'services/utils'
 
 type GenericSummaryProps = { status: Status }
 
@@ -60,8 +61,7 @@ const GenericSummary = ({
         <PaddedStatsBar>
           <StyledCypherInfoMessage>INFO</StyledCypherInfoMessage>
           <MessageArea>
-            This query is waiting for it&apos;s turn. The execution is serial
-            and will break on first error.
+            {`This query is waiting for it's turn. The execution is serial and will break on first error.`}
           </MessageArea>
         </PaddedStatsBar>
       )

@@ -17,37 +17,37 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import Rx from 'rxjs'
 import { v4 } from 'uuid'
+
+import { CONNECTION_SUCCESS } from '../connections/connectionsDuck'
+import { UPDATE_SETTINGS } from '../dbMeta/constants'
 import {
-  cleanCommand,
-  extractPostConnectCommandsFromServerConfig,
-  buildCommandObject,
-  extractStatementsFromString
-} from 'services/commandUtils'
-import {
-  extractAllowlistFromConfigString,
-  addProtocolsToUrlList,
-  firstSuccessPromise,
-  serialExecution,
-  resolveAllowlistWildcard
-} from 'services/utils'
-import helper from 'services/commandInterpreterHelper'
+  getAvailableSettings,
+  getDefaultRemoteContentHostnameAllowlist,
+  getRemoteContentHostnameAllowlist
+} from '../dbMeta/state'
 import { addHistory } from '../history/historyDuck'
 import {
   getMaxHistory,
   getPlayImplicitInitCommands,
   shouldEnableMultiStatementMode
 } from '../settings/settingsDuck'
-import { fetchRemoteGuide } from './helpers/play'
-import { CONNECTION_SUCCESS } from '../connections/connectionsDuck'
+import { fetchRemoteGuideAsync } from './helpers/playAndGuides'
+import helper from 'services/commandInterpreterHelper'
 import {
-  UPDATE_SETTINGS,
-  getAvailableSettings,
-  getRemoteContentHostnameAllowlist,
-  getDefaultRemoteContentHostnameAllowlist
-} from '../dbMeta/dbMetaDuck'
+  buildCommandObject,
+  cleanCommand,
+  extractPostConnectCommandsFromServerConfig,
+  extractStatementsFromString
+} from 'services/commandUtils'
+import {
+  addProtocolsToUrlList,
+  extractAllowlistFromConfigString,
+  firstSuccessPromise,
+  resolveAllowlistWildcard,
+  serialExecution
+} from 'services/utils'
 import { APP_START, USER_CLEAR } from 'shared/modules/app/appDuck'
 import { add as addFrame } from 'shared/modules/frames/framesDuck'
 import { update as updateQueryResult } from 'shared/modules/requests/requestsDuck'
@@ -88,6 +88,21 @@ export default function reducer(state = initialState, action: any) {
 
 // Action creators
 
+export interface ExecuteSingleCommandAction {
+  type: typeof SINGLE_COMMAND_QUEUED
+  cmd: string
+  id?: number | string
+  requestId?: string
+  useDb?: string | null
+  isRerun?: boolean
+}
+
+export interface ExecuteCommandAction extends ExecuteSingleCommandAction {
+  type: typeof COMMAND_QUEUED
+  parentId?: string
+  source?: string
+}
+
 export const commandSources = {
   button: 'BUTTON',
   playButton: 'PLAY-BUTTON',
@@ -99,8 +114,33 @@ export const commandSources = {
   sidebar: 'SIDEBAR',
   url: 'URL'
 }
+
+export const executeSingleCommand = (
+  cmd: string,
+  {
+    id,
+    requestId,
+    useDb,
+    isRerun = false
+  }: {
+    id?: number | string
+    requestId?: string
+    useDb?: string | null
+    isRerun?: boolean
+  } = {}
+): ExecuteSingleCommandAction => {
+  return {
+    type: SINGLE_COMMAND_QUEUED,
+    cmd,
+    id,
+    requestId,
+    useDb,
+    isRerun
+  }
+}
+
 export const executeCommand = (
-  cmd: any,
+  cmd: string,
   {
     id = undefined,
     requestId = undefined,
@@ -108,8 +148,15 @@ export const executeCommand = (
     useDb = undefined,
     isRerun = false,
     source = undefined
-  }: any = {}
-) => {
+  }: {
+    id?: number | string
+    requestId?: string
+    parentId?: string
+    useDb?: string | null
+    isRerun?: boolean
+    source?: string
+  } = {}
+): ExecuteCommandAction => {
   return {
     type: COMMAND_QUEUED,
     cmd,
@@ -119,20 +166,6 @@ export const executeCommand = (
     useDb,
     isRerun,
     source
-  }
-}
-
-export const executeSingleCommand = (
-  cmd: any,
-  { id, requestId, useDb, isRerun = false }: any = {}
-) => {
-  return {
-    type: SINGLE_COMMAND_QUEUED,
-    cmd,
-    id,
-    requestId,
-    useDb,
-    isRerun
   }
 }
 
@@ -282,23 +315,24 @@ export const postConnectCmdEpic = (some$: any, store: any) =>
       .map(() => {
         const serverSettings = getAvailableSettings(store.getState())
         // @GraphAcademy - disable post connect cmd
-        if (
-          false &&
-          serverSettings &&
-          serverSettings['browser.post_connect_cmd']
-        ) {
-          const cmds = extractPostConnectCommandsFromServerConfig(
-            serverSettings['browser.post_connect_cmd']
-          )
-          const playImplicitInitCommands = getPlayImplicitInitCommands(
-            store.getState()
-          )
-          if (playImplicitInitCommands && cmds !== undefined) {
-            cmds.forEach((cmd: any) => {
-              store.dispatch(executeSystemCommand(`:${cmd}`))
-            })
-          }
-        }
+        /* if (
+           false &&
+           serverSettings &&
+           serverSettings['browser.post_connect_cmd']
+         ) {
+           const cmds = extractPostConnectCommandsFromServerConfig(
+             serverSettings['browser.post_connect_cmd']
+           )
+           const playImplicitInitCommands = getPlayImplicitInitCommands(
+             store.getState()
+           )
+           if (playImplicitInitCommands && cmds !== undefined) {
+             cmds?.forEach((cmd: any) => {
+               store.dispatch(executeSystemCommand(`:${cmd}`))
+             })
+           }
+         }
+        */
         return { type: 'NOOP' }
       })
       .take(1)
@@ -323,7 +357,7 @@ export const fetchGuideFromAllowlistEpic = (some$: any, store: any) =>
 
     return firstSuccessPromise(guidesUrls, (url: any) => {
       // Get first successful fetch
-      return fetchRemoteGuide(url, allowlistStr).then(r => ({
+      return fetchRemoteGuideAsync(url, allowlistStr).then(r => ({
         type: action.$$responseChannel,
         success: true,
         result: r

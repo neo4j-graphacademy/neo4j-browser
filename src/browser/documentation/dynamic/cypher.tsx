@@ -17,9 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import React from 'react'
+
 import ManualLink from 'browser-components/ManualLink'
+
 const title = 'Cypher'
 const subtitle = 'A graph query language'
 const category = 'browserUiCommands'
@@ -27,8 +28,8 @@ const filter = ['cypher']
 const description = (
   <>
     <p>
-      Cypher is Neo4j&apos;s graph query language. Working with a graph is all
-      about understanding patterns of data, which are central to Cypher queries.
+      {`Cypher is Neo4j's graph query language. Working with a graph is all
+      about understanding patterns of data, which are central to Cypher queries.`}
     </p>
     <p>
       Use

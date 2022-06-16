@@ -17,11 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import styled from 'styled-components'
 
 interface FullscreenProps {
-  fullscreen: boolean
+  isFullscreen: boolean
 }
 
 export const Header = styled.div`
@@ -39,7 +38,7 @@ export const MainEditorWrapper = styled.div<FullscreenProps>`
   box-shadow: ${props => props.theme.standardShadow};
   margin: 10px 10px 0 10px;
   ${props =>
-    props.fullscreen &&
+    props.isFullscreen &&
     `
       position: fixed;
       top: 0px;
@@ -55,6 +54,10 @@ export const MainEditorWrapper = styled.div<FullscreenProps>`
         height: calc(100vh - 20px) !important;
       }
   `}};
+`
+
+export const CurrentEditIconContainer = styled.span`
+  color: ${props => props.theme.currentEditIconColor};
 `
 
 export const EditorContainer = styled.div`

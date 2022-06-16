@@ -17,33 +17,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+import { URL } from 'whatwg-url'
 import {
-  updateConnection,
-  getConnection
-} from 'shared/modules/connections/connectionsDuck'
+  authLog,
+  authRequestForSSO,
+  defaultSearchParamsToRemoveAfterAutoRedirect,
+  getSSOServerIdIfShouldRedirect,
+  handleAuthFromRedirect,
+  removeSearchParamsInBrowserHistory,
+  wasRedirectedBackFromSSOServer
+} from 'neo4j-client-sso'
+
+import { getAndMergeDiscoveryData } from './discoveryHelpers'
+import { generateBoltUrl } from 'services/boltscheme.utils'
 import {
   APP_START,
-  USER_CLEAR,
-  hasDiscoveryEndpoint,
-  getHostedUrl,
-  getAllowedBoltSchemes,
   CLOUD_SCHEMES,
+  USER_CLEAR,
+  getAllowedBoltSchemes,
+  getHostedUrl,
+  hasDiscoveryEndpoint,
   inDesktop
 } from 'shared/modules/app/appDuck'
-import { generateBoltUrl } from 'services/boltscheme.utils'
-import { isCloudHost, AUTH_STORAGE_CONNECT_HOST } from 'shared/services/utils'
-import { NEO4J_CLOUD_DOMAINS } from 'shared/modules/settings/settingsDuck'
 import {
-  authRequestForSSO,
-  handleAuthFromRedirect,
-  authLog,
-  removeSearchParamsInBrowserHistory,
-  getSSOServerIdIfShouldRedirect,
-  wasRedirectedBackFromSSOServer,
-  defaultSearchParamsToRemoveAfterAutoRedirect
-} from 'neo4j-client-sso'
-import { getAndMergeDiscoveryData } from './discoveryHelpers'
+  getConnection,
+  updateConnection
+} from 'shared/modules/connections/connectionsDuck'
+import { NEO4J_CLOUD_DOMAINS } from 'shared/modules/settings/settingsDuck'
+import { AUTH_STORAGE_CONNECT_HOST, isCloudHost } from 'shared/services/utils'
 
 export const NAME = 'discover-bolt-host'
 export const CONNECTION_ID = '$$discovery'
@@ -111,7 +112,7 @@ const updateDiscoveryState = (action: any, store: any) => {
   ]
   const updateObj: any = keysToCopy.reduce(
     (accObj, key) => (action[key] ? { ...accObj, [key]: action[key] } : accObj),
-    { host: action.forceURL }
+    { host: action.forceUrl }
   )
 
   if (typeof action.encrypted !== 'undefined') {
@@ -134,7 +135,7 @@ export const injectDiscoveryEpic = (action$: any, store: any) =>
         ),
         action.host
       )
-      return updateDiscoveryState({ ...action, forceURL: connectUrl }, store)
+      return updateDiscoveryState({ ...action, forceUrl: connectUrl }, store)
     })
     .mapTo({ type: DONE })
 
@@ -145,20 +146,20 @@ export const discoveryOnStartupEpic = (some$: any, store: any) => {
       if (!action.url) return action
       const { searchParams } = new URL(action.url)
 
-      const passedURL =
+      const passedUrl =
         searchParams.get('dbms') || searchParams.get('connectURL')
 
       const passedDb = searchParams.get('db')
 
-      if (passedURL) {
-        action.forceURL = decodeURIComponent(passedURL)
+      if (passedUrl) {
+        action.forceUrl = decodeURIComponent(passedUrl)
         action.requestedUseDb = passedDb
       }
 
-      const discoveryURL = searchParams.get('discoveryURL')
+      const discoveryUrl = searchParams.get('discoveryURL')
 
-      if (discoveryURL) {
-        action.discoveryURL = discoveryURL
+      if (discoveryUrl) {
+        action.discoveryUrl = discoveryUrl
       }
 
       const sessionStorageHost = sessionStorage.getItem(
@@ -183,7 +184,7 @@ export const discoveryOnStartupEpic = (some$: any, store: any) => {
       }
       const discoveryData = await getAndMergeDiscoveryData({
         action,
-        hostedURL: getHostedUrl(store.getState()),
+        hostedUrl: getHostedUrl(store.getState()) ?? window.location.href,
         hasDiscoveryEndpoint: hasDiscoveryEndpoint(store.getState()),
         generateBoltUrlWithAllowedScheme: (boltUrl: string) =>
           generateBoltUrl(

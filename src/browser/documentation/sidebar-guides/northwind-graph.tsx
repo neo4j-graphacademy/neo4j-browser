@@ -17,14 +17,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import React from 'react'
-import ManualLink from 'browser-components/ManualLink'
+
 import { BuiltInGuideSidebarSlide } from '../../modules/Carousel/Slide'
+import ManualLink from 'browser-components/ManualLink'
 import { DrawerExternalLink } from 'browser-components/drawer/drawer-styled'
 
 const title = 'Northwind Graph Guide'
 const category = 'graphExamples'
+const identifier = 'northwind-graph'
 const slides = [
   <BuiltInGuideSidebarSlide key="s1">
     <p className="lead">
@@ -58,8 +59,8 @@ const slides = [
       <em>Load the product catalog data from external CSV files</em>
     </p>
     <p>
-      Northwind sells food products in a few categories provided by suppliers.
-      Let's start by loading the product catalog tables.
+      {`Northwind sells food products in a few categories provided by suppliers.
+      Let's start by loading the product catalog tables.`}
     </p>
     <img
       src="./assets/images/northwind/product-category-supplier.png"
@@ -136,9 +137,9 @@ SET n = row`}
       <em>Transform foreign key references into data relationships</em>
     </p>
     <p>
-      The products, categories, and suppliers are related through foreign key
+      {`The products, categories, and suppliers are related through foreign key
       references. Let's promote those to data relationships to realize the
-      graph.
+      graph.`}
     </p>
     <img
       src="./assets/images/northwind/product-graph.png"
@@ -338,4 +339,4 @@ RETURN DISTINCT cust.contactName as CustomerName, SUM(o.quantity) AS TotalProduc
   </BuiltInGuideSidebarSlide>
 ]
 
-export default { title, category, slides }
+export default { title, category, identifier, slides }

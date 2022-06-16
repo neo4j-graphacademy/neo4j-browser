@@ -17,29 +17,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+import { fireEvent, render } from '@testing-library/react'
 import React from 'react'
-import { render, fireEvent } from '@testing-library/react'
 import { createBus } from 'suber'
+
 import { QueriesFrame } from './QueriesFrame'
 import {
-  DISCONNECTED_STATE,
-  CONNECTED_STATE
+  CONNECTED_STATE,
+  DISCONNECTED_STATE
 } from 'shared/modules/connections/connectionsDuck'
 
-// eslint-disable-next-line
-jest.mock('../../Frame/FrameTemplate', () => ({ contents, statusbar }: any) => (
-  <div>
-    {contents}
-    {statusbar}
-  </div>
-))
+jest.mock('../../Frame/FrameBodyTemplate', () =>
+  // eslint-disable-next-line
+  ({ contents, statusBar }: any) => (
+    <div>
+      {contents}
+      {statusBar}
+    </div>
+  )
+)
 
-it('shows error message in statusbar when not connected', () => {
+it('shows error message in statusBar when not connected', () => {
   const props = {
     availableProcedures: ['dbms.listQueries'],
     connectionState: DISCONNECTED_STATE
-  }
+  } as any
   const { getByText } = render(<QueriesFrame {...props} />)
 
   expect(getByText(/Unable to connect to bolt server/i)).not.toBeNull()
@@ -78,7 +80,10 @@ it('can list and kill queries', () => {
     availableProcedures: ['dbms.listQueries'],
     connectionState: CONNECTED_STATE,
     bus,
-    neo4jVersion: '4.0.0'
+    neo4jVersion: '4.0.0',
+    isFullscreen: false,
+    isCollapsed: false,
+    isOnCausalCluster: false
   }
 
   const { getByText, getByTestId } = render(<QueriesFrame {...props} />)

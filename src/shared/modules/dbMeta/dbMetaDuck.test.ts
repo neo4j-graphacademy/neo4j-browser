@@ -17,9 +17,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import neo4j from 'neo4j-driver'
-import reducer, * as meta from './dbMetaDuck'
+
+import {
+  CLEAR_META,
+  PARSE_META,
+  UPDATE_META,
+  UPDATE_SERVER,
+  UPDATE_SETTINGS
+} from './constants'
+import reducer from './state'
 import { APP_START } from 'shared/modules/app/appDuck'
 
 describe('hydrating state', () => {
@@ -96,7 +103,7 @@ describe('updating metadata', () => {
     }
 
     const action = {
-      type: meta.UPDATE_META,
+      type: PARSE_META,
       meta: {
         records: [
           returnedLabels,
@@ -149,7 +156,7 @@ describe('updating metadata', () => {
     const returnNothing = () => ({ data: [] })
     const returnNull = () => ({ data: null })
     const action = {
-      type: meta.UPDATE_META,
+      type: PARSE_META,
       meta: {
         records: [
           { result: { name: 'labels' }, get: returnNothing },
@@ -180,7 +187,7 @@ describe('updating metadata', () => {
       shouldKeep: true
     }
     const action = {
-      type: meta.UPDATE_SETTINGS,
+      type: UPDATE_SETTINGS,
       settings: {
         'browser.test': 1
       }
@@ -199,7 +206,7 @@ describe('updating metadata', () => {
       shouldKeep: true
     }
     const action = {
-      type: meta.UPDATE_SERVER,
+      type: UPDATE_SERVER,
       version: '3.2.0-RC2',
       edition: 'enterprise',
       storeId: 'xxxx'
@@ -223,7 +230,7 @@ describe('updating metadata', () => {
       }
     }
     const action = {
-      type: meta.CLEAR
+      type: CLEAR_META
     }
 
     // When
@@ -239,7 +246,7 @@ describe('updating metadata', () => {
       myKey: 'val',
       noKey: true
     }
-    const action = { type: meta.UPDATE, myKey: 'yo', secondKey: true }
+    const action = { type: UPDATE_META, myKey: 'yo', secondKey: true }
 
     // When
     const nextState = reducer(initState, action)
