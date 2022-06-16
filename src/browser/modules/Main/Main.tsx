@@ -18,26 +18,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 import React, { useEffect } from 'react'
-import {
-  DISCONNECTED_STATE,
-  PENDING_STATE,
-  CONNECTING_STATE
-} from 'shared/modules/connections/connectionsDuck'
+
 import Editor from '../Editor/MainEditor'
 import Stream from '../Stream/Stream'
-
+import AutoExecButton from '../Stream/auto-exec-button'
+import { useSlowConnectionState } from './main.hooks'
 import {
-  StyledMain,
-  WarningBanner,
+  DismissConsentBanner,
   ErrorBanner,
   NotAuthedBanner,
+  StyledMain,
   UdcConsentBanner,
-  DismissConsentBanner,
-  UnderlineClickable
+  UnderlineClickable,
+  WarningBanner
 } from './styled'
 import ErrorBoundary from 'browser-components/ErrorBoundary'
-import { useSlowConnectionState } from './main.hooks'
-import AutoExecButton from '../Stream/auto-exec-button'
+import {
+  CONNECTING_STATE,
+  DISCONNECTED_STATE,
+  PENDING_STATE
+} from 'shared/modules/connections/connectionsDuck'
 
 type MainProps = {
   connectionState: number
@@ -97,7 +97,7 @@ const Main = React.memo(function Main(props: MainProps) {
         <ErrorBanner data-testid="errorBanner">{errorMessage}</ErrorBanner>
       )}
       {/* @GraphAcademy - Remove disconnected state */}
-      {/* {props.connectionState === DISCONNECTED_STATE && (
+      {/* {connectionState === DISCONNECTED_STATE && (
         <NotAuthedBanner data-testid="disconnectedBanner">
           Database access not available. Please use&nbsp;
           <AutoExecButton
@@ -107,7 +107,7 @@ const Main = React.memo(function Main(props: MainProps) {
           {` to establish connection. There's a graph waiting for you.`}
         </NotAuthedBanner>
       )} */}
-      {props.connectionState === PENDING_STATE && !past10Sec && (
+      {connectionState === PENDING_STATE && !past10Sec && (
         <WarningBanner data-testid="reconnectBanner">
           Connection to server lost. Reconnecting...
         </WarningBanner>
