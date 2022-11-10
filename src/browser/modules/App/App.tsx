@@ -96,7 +96,7 @@ import {
   updateUdcData
 } from 'shared/modules/udc/udcDuck'
 import { getTelemetrySettings } from 'shared/utils/selectors'
-import LoadingWrapper from 'browser/custom/LoadingWrapper'
+import GraphAcademyProvider from 'browser/graphacademy/graph-academy.provider'
 
 export const MAIN_WRAPPER_DOM_ID = 'MAIN_WRAPPER_DOM_ID'
 
@@ -181,7 +181,7 @@ export function App(props: any) {
 
   return (
     <ErrorBoundary>
-      <LoadingWrapper>
+      <GraphAcademyProvider>
         <DesktopApi
           onMount={(...args: any[]) => {
             const { allowSendStats, allowSendReports, trackingId } = args[1]
@@ -240,7 +240,7 @@ export function App(props: any) {
               <StyledWrapper className={wrapperClassNames}>
                 <DocTitle titleString={titleString} />
                 <UserInteraction />
-                {loadExternalScripts && (
+                {/* {loadExternalScripts && (
                   <>
                     <Segment
                       segmentKey={SEGMENT_KEY}
@@ -257,7 +257,7 @@ export function App(props: any) {
                     authData={browserSyncMetadata}
                     config={browserSyncConfig}
                   />
-                )}
+                )} */}
                 <StyledApp>
                   <StyledBody>
                     {/* @GraphAcademy - remove sidebar */}
@@ -295,7 +295,7 @@ export function App(props: any) {
             </FileDrop>
           </FeatureToggleProvider>
         </ThemeProvider>
-      </LoadingWrapper>
+      </GraphAcademyProvider>
     </ErrorBoundary>
   )
 }

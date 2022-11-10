@@ -1,4 +1,5 @@
 import { LoadingSpinner } from '@neo4j-ndl/react'
+import Loading from 'browser/graphacademy/loading'
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { withBus } from 'react-suber'
@@ -45,12 +46,7 @@ function LoadingWrapper(props: Props) {
 
   return (
     <div>
-      {isLoading && (
-        <div style={styles.wrapper}>
-          <LoadingSpinner size="large" />
-          <div>Connecting to Sandbox</div>
-        </div>
-      )}
+      {isLoading && <Loading message="Connecting to Sandbox..." />}
       <div>{props.children}</div>
     </div>
   )
