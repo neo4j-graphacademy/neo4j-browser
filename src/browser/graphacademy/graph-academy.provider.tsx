@@ -1,4 +1,4 @@
-import { Alert } from '@neo4j-ndl/react'
+import { Alert, Button } from '@neo4j-ndl/react'
 import React, { useState } from 'react'
 import { GraphAcademyContext } from './graph-academy.context'
 import { Sandbox } from './types/sandbox'
@@ -11,6 +11,17 @@ import LoadingWrapper from 'browser/custom/LoadingWrapper'
 
 interface GraphAcademyProviderProps {
   children: React.ReactNode | React.ReactNode[] | null
+}
+
+declare global {
+  interface Window {
+    ga: {
+      course?: {
+        title: string
+        usecase: string | undefined
+      }
+    }
+  }
 }
 
 export default function GraphAcademyProvider(
@@ -43,8 +54,36 @@ export default function GraphAcademyProvider(
             description={error}
             icon
             type="danger"
-            title="Error fetching sandbox"
-          />
+            title="Error connecting to sandbox"
+          >
+            <Button color="danger" onClick={() => document.location.reload()}>
+              Refresh Page
+            </Button>
+          </Alert>
+
+          <div
+            style={{
+              marginTop: 24,
+              margin: 'auto',
+              maxWidth: 220,
+              fontSize: '0.9rem'
+            }}
+          >
+            You can also log into
+            <a
+              href={`https://sandbox.neo4j.com/?usecase=${window.ga?.course?.usecase}`}
+              style={{ fontWeight: 'bold', textDecoration: 'underline' }}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {' '}
+              Neo4j Sandbox
+            </a>
+            {window.ga?.course?.usecase
+              ? ` and select the ${window.ga?.course?.usecase} use case`
+              : ''}
+            .
+          </div>
         </div>
       </div>
     )
