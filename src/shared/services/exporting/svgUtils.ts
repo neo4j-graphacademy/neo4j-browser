@@ -44,7 +44,9 @@ export const prepareForExport = (
 
   svg.selectAll('.overlay, .ring').remove()
   svg.selectAll('.context-menu-item').remove()
-  svg.selectAll('text').attr('font-family', 'sans-serif')
+  svg
+    .selectAll('text')
+    .attr('font-family', 'Helvetica Neue, Helvetica, Arial, sans-serif')
 
   svg.attr('width', dimensions.width)
   svg.attr('height', dimensions.height)
@@ -71,7 +73,7 @@ const getSvgDimensions = (view: any) => {
 const appendGraphLayers = (svgElement: SVGElement, svg: any) => {
   d3Select(svgElement)
     .selectAll('g.layer')
-    .each(function() {
+    .each(function () {
       svg.node().appendChild(
         d3Select<SVGGElement, unknown>(this as SVGGElement)
           .node()
@@ -83,7 +85,7 @@ const appendGraphLayers = (svgElement: SVGElement, svg: any) => {
 const appendPlanLayers = (svgElement: SVGElement, svg: any) => {
   d3Select(svgElement)
     .selectAll('g.layer')
-    .each(function() {
+    .each(function () {
       svg.node().appendChild(
         d3Select<SVGGElement, unknown>(this as SVGGElement)
           .node()

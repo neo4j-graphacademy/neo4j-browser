@@ -23,7 +23,6 @@ import { connect } from 'react-redux'
 import { withBus } from 'react-suber'
 import { ThemeProvider } from 'styled-components'
 
-import DocTitle from '../DocTitle'
 import asTitleString from '../DocTitle/titleStringBuilder'
 import FeatureToggleProvider from '../FeatureToggle/FeatureToggleProvider'
 import Main from '../Main/Main'
@@ -73,7 +72,7 @@ import {
   getEdition,
   isServerConfigDone,
   shouldAllowOutgoingConnections
-} from 'shared/modules/dbMeta/state'
+} from 'shared/modules/dbMeta/dbMetaDuck'
 import {
   CONNECTION_ID,
   INJECTED_DISCOVERY
@@ -177,12 +176,16 @@ export function App(props: any) {
     updateDesktopUDCSettings
   } = props
 
+  useEffect(() => {
+    document.title = titleString
+  }, [titleString])
+
   const wrapperClassNames = codeFontLigatures ? '' : 'disable-font-ligatures'
 
   return (
     <ErrorBoundary>
       <GraphAcademyProvider>
-        <DesktopApi
+        {/* <DesktopApi
           onMount={(...args: any[]) => {
             const { allowSendStats, allowSendReports, trackingId } = args[1]
               ?.global?.settings || {
@@ -232,13 +235,13 @@ export function App(props: any) {
           setEventMetricsCallback={(fn: any) =>
             (eventMetricsCallback.current = fn)
           }
-        />
+        /> */}
         <PerformanceOverlay />
         <ThemeProvider theme={themeData}>
           <FeatureToggleProvider features={experimentalFeatures}>
             <FileDrop store={store}>
               <StyledWrapper className={wrapperClassNames}>
-                <DocTitle titleString={titleString} />
+                {/* <DocTitle titleString={titleString} /> */}
                 <UserInteraction />
                 {/* {loadExternalScripts && (
                   <>

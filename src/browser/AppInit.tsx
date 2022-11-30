@@ -51,7 +51,7 @@ import { version } from 'project-root/package.json'
 import { applyKeys, createReduxMiddleware, getAll } from 'services/localstorage'
 import { detectRuntimeEnv, isRunningE2ETest } from 'services/utils'
 import { GlobalState } from 'shared/globalState'
-import { APP_START, updateBuildInfo } from 'shared/modules/app/appDuck'
+import { APP_START } from 'shared/modules/app/appDuck'
 import { NEO4J_CLOUD_DOMAINS } from 'shared/modules/settings/settingsDuck'
 import { getUuid, updateUdcData } from 'shared/modules/udc/udcDuck'
 import epics from 'shared/rootEpic'
@@ -154,17 +154,15 @@ function scrubQueryParamsAndUrl(event: Sentry.Event): Sentry.Event {
 export function setupSentry(): void {
   if (process.env.NODE_ENV === 'production') {
     Sentry.init({
-      dsn:
-        'https://1ea9f7ebd51441cc95906afb2d31d841@o110884.ingest.sentry.io/1232865',
+      dsn: 'https://1ea9f7ebd51441cc95906afb2d31d841@o110884.ingest.sentry.io/1232865',
       release: `neo4j-browser@${version}`,
       integrations: [
         new Integrations.BrowserTracing(),
         new CaptureConsole({ levels: ['error'] })
       ],
       tracesSampler: context => {
-        const isPerformanceTransaction = context.transactionContext.name.startsWith(
-          'performance'
-        )
+        const isPerformanceTransaction =
+          context.transactionContext.name.startsWith('performance')
         if (isPerformanceTransaction) {
           // 1% of performance reports is enough to build stats, raise if needed
           return 0.01
@@ -242,15 +240,6 @@ if (auraNtId) {
   removeSearchParamsInBrowserHistory(['ntid'])
 }
 store.dispatch(updateUdcData({ auraNtId }))
-
-fetch('./manifest.json')
-  .then(res => res.json())
-  .then(json => {
-    if (json.buildNumber || json.builtAt) {
-      store.dispatch(updateBuildInfo(json))
-    }
-  })
-  .catch(() => undefined)
 
 // typePolicies allow apollo cache to use these fields as 'id'
 // for automated cache updates when updating a single existing entity

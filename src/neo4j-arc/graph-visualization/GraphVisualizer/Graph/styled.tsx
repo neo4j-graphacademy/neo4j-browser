@@ -75,7 +75,7 @@ export const StyledSvgWrapper = styled.div`
         }
       }
     }
-    .outline {
+    .b-outline {
       cursor: pointer;
     }
     path {
@@ -110,7 +110,7 @@ export const StyledZoomHolder = styled.div<{
   position: ${props => (props.isFullscreen ? 'fixed' : 'absolute')};
   display: flex;
   flex-direction: column;
-  bottom: 0;
+  bottom: 8px;
   right: ${props => props.offset}px;
   border-left: ${props => props.theme.inFrameBorder};
   border-right: ${props => props.theme.inFrameBorder};
@@ -128,13 +128,13 @@ export const StyledZoomButton = styled.button`
     background: ${props => props.theme.frameButtonHoverBackground};
     border-radius: 2px;
   }
-  &:active {
+  &:enabled:active {
     background: ${props => props.theme.frameButtonActiveBackground};
   }
   &:focus {
     outline: none;
   }
-  &.faded {
+  &:disabled {
     opacity: 0.3;
     cursor: auto;
   }

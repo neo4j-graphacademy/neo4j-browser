@@ -40,11 +40,11 @@ import {
   Time
 } from 'neo4j-driver-core'
 
-/** 
+/**
       The neo4j driver type mapping - https://neo4j.com/docs/javascript-manual/current/cypher-workflow/#js-driver-type-mapping
-      
+
       Star denotes custom driver class.
-      
+
       Cypher(neo4j) -  Driver type(js)
       null          - null
       List          - array
@@ -129,6 +129,15 @@ export const isCypherBasicPropertyType = (
     isCypherTemporalType(value) ||
     isPoint(value)
   )
+}
+export const isCypherPropertyType = (value: any): value is CypherProperty => {
+  if (Array.isArray(value)) {
+    if (value.length === 0) return true
+
+    return isCypherBasicPropertyType(value[0])
+  } else {
+    return isCypherBasicPropertyType(value)
+  }
 }
 
 export const isCypherTemporalType = (

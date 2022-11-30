@@ -28,44 +28,6 @@ export const StyledInlineList = styled.ul`
   word-break: break-word;
 `
 
-export const StyledInlineListStylePicker = styled(StyledInlineList)`
-  display: grid;
-  overflow-y: auto;
-  max-height: 400px;
-  background: ${props => props.theme.editorBackground};
-  color: ${props => props.theme.primaryText};
-  padding: 0.833em 1em;
-`
-export const StyledInlineListItem = styled.li`
-  display: inline-block;
-  padding-right: 5px;
-`
-
-export const StyledToken = styled(StyledInlineListItem)`
-  display: inline-block;
-  font-weight: bold;
-  line-height: 1em;
-  text-align: center;
-  vertical-align: baseline;
-  user-select: none;
-  font-size: 12px;
-  margin-right: 5px;
-  cursor: pointer;
-  margin-bottom: 3px;
-`
-export const StyledLabelToken = styled(StyledToken)`
-  padding: 4px 7px 4px 9px;
-  border-radius: 20px;
-  word-break: break-all;
-  margin-top: 4px;
-  cursor: default;
-`
-export const StyledTokenRelationshipType = styled(StyledToken)`
-  padding: 4px 7px 4px 5px;
-  border-radius: 3px;
-  word-break: break-all;
-  cursor: default;
-`
 export const StyledLegendInlineList = styled(StyledInlineList)`
   padding: 4px 0 0 0;
   &.contracted {
@@ -73,75 +35,16 @@ export const StyledLegendInlineList = styled(StyledInlineList)`
     overflow: hidden;
   }
 `
-export const StyledPickerListItem = styled(StyledInlineListItem)`
-  padding-right: 5px;
-  padding-left: 0;
-  vertical-align: middle;
-  line-height: 0;
+
+export const NonClickableLabelChip = styled(StyledLabelChip)`
+  cursor: default;
 `
 
-export const StyledPickerSelector = styled.a`
-  background-color: #aaa;
-  display: inline-block;
-  height: 12px;
-  width: 12px;
-  margin-top: 1px;
-  line-height: 0;
-  cursor: pointer;
-  opacity: 0.4;
-  &:hover {
-    opacity: 1;
-  }
-  &.active {
-    opacity: 1;
-  }
-`
-export const StyledCircleSelector = styled(StyledPickerSelector)`
-  border-radius: 50%;
-`
-export const StyledCaptionSelector = styled.a`
-  cursor: pointer;
-  user-select: none;
-  display: inline-block;
-  padding: 1px 6px;
-  font-size: 12px;
-  line-height: 1em;
-  color: #9195a0;
-  border: 1px solid #9195a0;
-  overflow: hidden;
-  border-radius: 0.25em;
-  margin-right: 0;
-  font-weight: bold;
-  &:hover {
-    border-color: #aaa;
-    color: #aaa;
-    text-decoration: none;
-  }
-  &.active {
-    color: white;
-    background-color: #9195a0;
-  }
+export const NonClickableRelTypeChip = styled(StyledRelationshipChip)`
+  cursor: default;
 `
 
-export const StyledNodeInspectorContainer = styled.div<{
-  width: number
-  shouldAnimate: boolean
-}>`
-  position: absolute;
-  right: 0;
-  top: 3px;
-  z-index: 1;
-  width: ${props => props.width}px;
-  ${props => props.shouldAnimate && 'transition: 0.2s ease-out;'}
-  max-width: 95%;
-  height: 100%;
-  background: ${props => props.theme.editorBackground};
-  color: ${props => props.theme.primaryText};
-  font-family: ${props => props.theme.drawerHeaderFontFamily};
-  box-shadow: ${props => props.theme.standardShadow};
-`
-
-export const PaneContainer = styled.div`
+export const PaneWrapper = styled.div`
   padding: 0 14px;
   height: 100%;
   display: flex;
@@ -152,19 +55,18 @@ export const PaneHeader = styled.div`
   font-size: 16px;
   margin-top: 10px;
   flex: 0 0 auto;
+  overflow: auto;
+  max-height: 50%;
 `
 
 export const PaneBody = styled.div`
+  height: 100%;
   overflow: auto;
   margin: 14px 0;
   flex: 0 1 auto;
   display: flex;
   flex-direction: column;
   gap: 14px;
-`
-
-export const PaneTitle = styled.div`
-  margin-bottom: 10px;
 `
 
 export const PaneBodySectionTitle = styled.span`
@@ -179,10 +81,9 @@ export const PaneBodySectionHeaderWrapper = styled.div`
   flex-direction: column;
 `
 
-export const NonClickableLabelChip = styled(StyledLabelChip)`
-  cursor: default;
-`
-
-export const NonClickableRelTypeChip = styled(StyledRelationshipChip)`
-  cursor: default;
+export const PaneTitle = styled.div`
+  margin-bottom: 10px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
 `
