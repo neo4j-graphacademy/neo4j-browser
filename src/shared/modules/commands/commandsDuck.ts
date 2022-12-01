@@ -317,11 +317,13 @@ export const handleSingleCommandEpic = (action$: any, store: any) =>
       })
     })
 
+// eslint-disable-next-line
 export const postConnectCmdEpic = (some$: any, store: any) =>
   some$.ofType(CONNECTION_SUCCESS).mergeMap(() =>
     some$
       .ofType(UPDATE_SETTINGS)
       .map(() => {
+        store
         // @GraphAcademy - disable post connect cmd
         // const serverSettings = getAvailableSettings(store.getState())
         // if (serverSettings && serverSettings.postConnectCmd) {

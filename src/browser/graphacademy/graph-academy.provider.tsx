@@ -7,7 +7,6 @@ import { Driver } from 'neo4j-driver'
 import { GetSandboxCredentials } from './stages/1-get-credentials'
 import { WaitForSandboxIp } from './stages/2-wait-for-ip'
 import { VerifyConnectivity } from './stages/3-verify-connectivity'
-import LoadingWrapper from 'browser/custom/LoadingWrapper'
 
 interface GraphAcademyProviderProps {
   children: React.ReactNode | React.ReactNode[] | null
@@ -56,6 +55,7 @@ export default function GraphAcademyProvider(
             type="danger"
             title="Error connecting to sandbox"
           >
+            <p style={{ marginBottom: 24 }}>{error}</p>
             <Button color="danger" onClick={() => document.location.reload()}>
               Refresh Page
             </Button>
@@ -64,23 +64,22 @@ export default function GraphAcademyProvider(
           <div
             style={{
               marginTop: 24,
-              margin: 'auto',
-              maxWidth: 220,
-              fontSize: '0.9rem'
+              maxWidth: 280,
+              fontSize: '0.9rem',
+              textAlign: 'center'
             }}
           >
-            You can also log into
+            You can also log into{' '}
             <a
               href={`https://sandbox.neo4j.com/?usecase=${window.ga?.course?.usecase}`}
               style={{ fontWeight: 'bold', textDecoration: 'underline' }}
               rel="noreferrer"
               target="_blank"
             >
-              {' '}
               Neo4j Sandbox
             </a>
             {window.ga?.course?.usecase
-              ? ` and select the ${window.ga?.course?.usecase} use case`
+              ? ` and selecting the ${window.ga?.course?.usecase} use case`
               : ''}
             .
           </div>
@@ -138,12 +137,12 @@ export default function GraphAcademyProvider(
   // 4. Render application
   return (
     <GraphAcademyContext.Provider value={{ sandbox, driver }}>
-      <LoadingWrapper>
-        {/* @ts-ignore */}
-        {/* <Neo4jProvider driver={driver}> */}
-        {props.children}
-        {/* </Neo4jProvider> */}
-      </LoadingWrapper>
+      {/* <LoadingWrapper> */}
+      {/* @ts-ignore */}
+      {/* <Neo4jProvider driver={driver}> */}
+      {props.children}
+      {/* </Neo4jProvider> */}
+      {/* </LoadingWrapper> */}
     </GraphAcademyContext.Provider>
   )
 }

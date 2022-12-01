@@ -28,7 +28,10 @@ import {
 import { NATIVE, NO_AUTH, SSO } from 'services/bolt/boltHelpers'
 import { GlobalState } from 'shared/globalState'
 import { APP_START, USER_CLEAR, inWebEnv } from 'shared/modules/app/appDuck'
-import { executeSystemCommand } from 'shared/modules/commands/commandsDuck'
+import {
+  executeCommand,
+  executeSystemCommand
+} from 'shared/modules/commands/commandsDuck'
 import * as discovery from 'shared/modules/discovery/discoveryDuck'
 import {
   getConnectionTimeout,
@@ -38,6 +41,7 @@ import {
 import { NEO4J_CLOUD_DOMAINS } from 'shared/modules/settings/settingsDuck'
 import { isCloudHost } from 'shared/services/utils'
 import { fetchMetaData } from '../dbMeta/dbMetaDuck'
+import { editContent, setContent } from '../editor/editorDuck'
 
 export const NAME = 'connections'
 export const SET_ACTIVE = 'connections/SET_ACTIVE'
@@ -585,9 +589,24 @@ export const startupConnectionSuccessEpic = (action$: any, store: any) => {
     .ofType(STARTUP_CONNECTION_SUCCESS)
     .do(() => {
       // @GraphAcademy - Disable server status
-      if (false && getPlayImplicitInitCommands(store.getState())) {
-        store.dispatch(executeSystemCommand(`:server status`))
-        store.dispatch(executeSystemCommand(getInitCmd(store.getState())))
+      // if (getPlayImplicitInitCommands(store.getState())) {
+      // store.dispatch(executeCommand(event.data.arg))
+      // store.dispatch(executeSystemCommand(`:server status`))
+
+      // store.dispatch(executeSystemCommand(getInitCmd(store.getState())))
+      // }
+
+      // @GraphAcademy - detect ?cmd=edit&arg={cypher}
+      const url = new URL(window.location.href)
+      const cmd = url.searchParams.get('cmd')
+      const arg = url.searchParams.get('arg')
+
+      console.log({ cmd, arg })
+
+      if (cmd === 'edit' && arg && arg !== '') {
+        console.log('spatch')
+
+        store.dispatch(editContent('init', cmd))
       }
     })
     .ignoreElements()
