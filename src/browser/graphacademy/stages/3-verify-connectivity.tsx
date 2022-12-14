@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Sandbox } from '../types/sandbox'
 import neo4j, { Driver } from 'neo4j-driver'
 import Loading from '../loading'
+import { getSandboxHost } from '../utils'
 
 interface VerifyConnectivityProps {
   sandbox: Sandbox
@@ -18,8 +19,10 @@ export function VerifyConnectivity({
   const [attempt, setAttempt] = useState<number>(1)
 
   useEffect(() => {
+    const uri = getSandboxHost(sandbox)
+
     const driver = neo4j.driver(
-      `bolt://${sandbox.ip}:${sandbox.boltPort}`,
+      uri,
       neo4j.auth.basic(sandbox.username, sandbox.password)
     )
 

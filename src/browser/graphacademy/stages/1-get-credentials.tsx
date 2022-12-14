@@ -5,25 +5,23 @@ import { Sandbox } from '../types/sandbox'
 import { getSandboxForCourse } from '../utils'
 
 interface GetSandboxCredentialsProps {
+  course: string
   setSandbox: (sandbox: Sandbox) => void
   setError: (error: string) => void
 }
 
 export function GetSandboxCredentials({
+  course,
   setSandbox,
   setError
 }: GetSandboxCredentialsProps): JSX.Element {
-  // graphacademy.neo4j.com/courses/app-nodejs/1-module/2-lesson/browser
-  const [_course_ = 'courses', slug = 'app-nodejs', ...other] =
-    window.location.pathname.split('/').filter(n => n !== '')
-
   useEffect(() => {
-    getSandboxForCourse(slug)
+    getSandboxForCourse(course)
       .then(json => {
         setSandbox(json)
       })
       .catch(e => setError(e.message))
-  }, [slug, setError, setSandbox])
+  }, [course, setError, setSandbox])
 
   return <Loading message="Getting Sandbox Credentials" />
 }

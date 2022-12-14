@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import Loading from '../loading'
 import { Sandbox } from '../types/sandbox'
-import { getSandboxbyHashKey } from '../utils'
+import { getSandboxForCourse } from '../utils'
 
 interface WaitForSandboxIpProps {
+  course: string
   sandbox: Sandbox
   setSandbox: (sandbox: Sandbox) => void
   setError: (error: string) => void
 }
 
 export function WaitForSandboxIp({
+  course,
   sandbox,
   setSandbox,
   setError
@@ -18,7 +20,7 @@ export function WaitForSandboxIp({
   const [attempt, setAttempt] = useState<number>(1)
 
   useEffect(() => {
-    getSandboxbyHashKey(sandbox.sandboxHashKey)
+    getSandboxForCourse(course, true)
       .then(json => {
         if (process.env.REACT_APP_DEBUG && attempt < maxAttempts) {
           throw new Error('[FAKE ERROR]')
@@ -37,7 +39,7 @@ export function WaitForSandboxIp({
           setAttempt(attempt + 1)
         }
       })
-  }, [sandbox, attempt, setSandbox, setError])
+  }, [sandbox, course, attempt, maxAttempts, setSandbox, setError])
 
   return <Loading message="Configuring Sandbox, please wait..." />
 }

@@ -8,8 +8,8 @@ import { GetSandboxCredentials } from './stages/1-get-credentials'
 import { WaitForSandboxIp } from './stages/2-wait-for-ip'
 import { VerifyConnectivity } from './stages/3-verify-connectivity'
 import {
+  CONNECTED_STATE,
   ConnectionState,
-  selectConnection,
   setActiveConnection,
   updateConnection
 } from 'shared/modules/connections/connectionsDuck'
@@ -20,10 +20,12 @@ import { connect } from 'react-redux'
 import { GlobalState } from 'shared/globalState'
 import { setContent } from 'shared/modules/editor/editorDuck'
 import Loading from './loading'
+import { getSandboxHost } from './utils'
 
 interface GraphAcademyProviderProps {
   children: React.ReactElement
   updateConnection: (sandbox: Sandbox) => void
+  setCypherFromQueryString: () => void
   connection: string | null
   connectionState: ConnectionState
 }
@@ -40,15 +42,32 @@ declare global {
 }
 
 function GraphAcademyProvider(props: GraphAcademyProviderProps): JSX.Element {
+  // graphacademy.neo4j.com/courses/app-nodejs/1-module/2-lesson/browser
+  const [_course_ = 'courses', slug = 'app-nodejs', ...other] =
+    window.location.pathname.split('/').filter(n => n !== '')
+
   const [sandbox, setSandbox] = useState<Sandbox>()
   const [error, setError] = useState<string>()
   const [driver, setDriver] = useState<Driver>()
 
+  const { connectionState, updateConnection, setCypherFromQueryString } = props
+
   useEffect(() => {
-    if (sandbox && driver) {
-      props.updateConnection(sandbox)
+    // Driver connected and updateConnection dispatched
+    if (connectionState === CONNECTED_STATE && sandbox && driver) {
+      setCypherFromQueryString()
     }
-  }, [driver, sandbox])
+    // Sandbox has IP and connection verified
+    else if (connectionState !== CONNECTED_STATE && sandbox && driver) {
+      updateConnection(sandbox)
+    }
+  }, [
+    driver,
+    sandbox,
+    connectionState,
+    updateConnection,
+    setCypherFromQueryString
+  ])
 
   if (error) {
     return (
@@ -110,13 +129,20 @@ function GraphAcademyProvider(props: GraphAcademyProviderProps): JSX.Element {
 
   // 1. Load Sandbox for use case
   else if (!sandbox) {
-    return <GetSandboxCredentials setSandbox={setSandbox} setError={setError} />
+    return (
+      <GetSandboxCredentials
+        course={slug}
+        setSandbox={setSandbox}
+        setError={setError}
+      />
+    )
   }
 
   // 2. Wait for Sandbox IP to be set
   else if (!sandbox.ip || sandbox.ip === undefined) {
     return (
       <WaitForSandboxIp
+        course={slug}
         sandbox={sandbox}
         setSandbox={setSandbox}
         setError={setError}
@@ -136,7 +162,7 @@ function GraphAcademyProvider(props: GraphAcademyProviderProps): JSX.Element {
   }
 
   // 4. Await active connection
-  else if (!props.connection) {
+  else if (props.connectionState !== CONNECTED_STATE) {
     return <Loading message="Preparing connection" />
   }
 
@@ -163,12 +189,13 @@ const mapStateToProps = (state: GlobalState) => {
 const mapDispatchToProps = (dispatch: any) => {
   return {
     updateConnection: (sandbox: Sandbox) => {
-      const { username, password, ip, boltPort } = sandbox as Sandbox
+      const { username, password } = sandbox as Sandbox
 
       dispatch(
         updateConnection({
           id: CONNECTION_ID,
-          host: `bolt://${ip}:${boltPort}`,
+          host: getSandboxHost(sandbox),
+          db: 'neo4j',
           username,
           password,
           authEnabled: true,
@@ -176,6 +203,11 @@ const mapDispatchToProps = (dispatch: any) => {
         })
       )
 
+      // setTimeout(() => {
+      dispatch(setActiveConnection(CONNECTION_ID, true))
+      // }, 10)
+    },
+    setCypherFromQueryString() {
       // @GraphAcademy - detect ?cmd=edit&arg={cypher}
       const url = new URL(window.location.href)
       const cmd = url.searchParams.get('cmd')
@@ -184,7 +216,7 @@ const mapDispatchToProps = (dispatch: any) => {
       if (cmd === 'edit' && arg && arg !== '') {
         setTimeout(() => {
           dispatch(setContent(arg))
-        }, 20)
+        }, 200)
       }
     }
   }
