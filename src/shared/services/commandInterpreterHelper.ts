@@ -452,27 +452,27 @@ const availableCommands = [
       //   description:
       //     'Time from all actions dispatched until request is resolved'
       // })
-      // return request
-      //   .then((res: any) => {
-      //     put(updateQueryResult(id, res, REQUEST_STATUS_SUCCESS))
-      //     put(successfulCypher(action.cmd))
-      //     return res
-      //   })
-      //   .catch((e: any) => {
-      //     const request = getRequest(store.getState(), id)
-      //     // Only update error statuses for pending queries
-      //     if (request.status !== REQUEST_STATUS_PENDING) {
-      //       return
-      //     }
-      //     put(updateQueryResult(id, e, REQUEST_STATUS_ERROR))
-      //     put(unsuccessfulCypher(action.cmd))
-      //     throw e
-      //   })
-      //   .finally(() => {
-      //     put(fetchMetaData())
-      //     finishRequestSpan?.finish()
-      //     transaction?.finish()
-      //   })
+      return request
+        .then((res: any) => {
+          put(updateQueryResult(id, res, REQUEST_STATUS_SUCCESS))
+          put(successfulCypher(action.cmd))
+          return res
+        })
+        .catch((e: any) => {
+          const request = getRequest(store.getState(), id)
+          // Only update error statuses for pending queries
+          if (request.status !== REQUEST_STATUS_PENDING) {
+            return
+          }
+          put(updateQueryResult(id, e, REQUEST_STATUS_ERROR))
+          put(unsuccessfulCypher(action.cmd))
+          throw e
+        })
+        .finally(() => {
+          put(fetchMetaData())
+          // finishRequestSpan?.finish()
+          // transaction?.finish()
+        })
     }
   },
   {

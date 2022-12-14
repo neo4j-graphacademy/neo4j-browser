@@ -176,8 +176,6 @@ const mapDispatchToProps = (dispatch: any) => {
         })
       )
 
-      dispatch(setActiveConnection(CONNECTION_ID))
-
       // @GraphAcademy - detect ?cmd=edit&arg={cypher}
       const url = new URL(window.location.href)
       const cmd = url.searchParams.get('cmd')
