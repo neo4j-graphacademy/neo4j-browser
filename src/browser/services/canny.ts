@@ -89,14 +89,14 @@ const CannySDK = {
 
 export class CannyLoader extends Component {
   componentDidMount(): void {
-    CannySDK.init()
-      .then(() => {
-        window.IsCannyLoaded = true
-        window.Canny && window.Canny('initChangelog', cannyOptions)
-      })
-      .catch(() => {
-        window.IsCannyLoaded = false
-      })
+    // CannySDK.init()
+    //   .then(() => {
+    //     window.IsCannyLoaded = true
+    //     window.Canny && window.Canny('initChangelog', cannyOptions)
+    //   })
+    //   .catch(() => {
+    //     window.IsCannyLoaded = false
+    //   })
   }
 
   shouldComponentUpdate(): boolean {

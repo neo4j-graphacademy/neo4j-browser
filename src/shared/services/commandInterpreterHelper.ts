@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import * as Sentry from '@sentry/react'
+// import * as Sentry from '@sentry/react'
 import { AUTH_STORAGE_LOGS } from 'neo4j-client-sso'
 import { Action, Dispatch } from 'redux'
 import { v4 } from 'uuid'
@@ -401,12 +401,12 @@ const availableCommands = [
       new RegExp(`^${autoCommitTxCommand}`, 'i').test(cmd),
     exec: (action: any, put: any, store: any) => {
       // Sentry crashes tests without the ?. when it's not been initiated
-      const transaction = Sentry.startTransaction({
-        name: 'performance/cypher-query'
-      })
-      const startingRequest = transaction?.startChild({
-        op: 'Starting request and dispatching'
-      })
+      // const transaction = Sentry.startTransaction({
+      //   name: 'performance/cypher-query'
+      // })
+      // const startingRequest = transaction?.startChild({
+      //   op: 'Starting request and dispatching'
+      // })
 
       const state = store.getState()
 
@@ -446,33 +446,33 @@ const availableCommands = [
           requestId: id
         })
       )
-      startingRequest?.finish()
-      const finishRequestSpan = transaction?.startChild({
-        op: 'Resolve request',
-        description:
-          'Time from all actions dispatched until request is resolved'
-      })
-      return request
-        .then((res: any) => {
-          put(updateQueryResult(id, res, REQUEST_STATUS_SUCCESS))
-          put(successfulCypher(action.cmd))
-          return res
-        })
-        .catch((e: any) => {
-          const request = getRequest(store.getState(), id)
-          // Only update error statuses for pending queries
-          if (request.status !== REQUEST_STATUS_PENDING) {
-            return
-          }
-          put(updateQueryResult(id, e, REQUEST_STATUS_ERROR))
-          put(unsuccessfulCypher(action.cmd))
-          throw e
-        })
-        .finally(() => {
-          put(fetchMetaData())
-          finishRequestSpan?.finish()
-          transaction?.finish()
-        })
+      // startingRequest?.finish()
+      // const finishRequestSpan = transaction?.startChild({
+      //   op: 'Resolve request',
+      //   description:
+      //     'Time from all actions dispatched until request is resolved'
+      // })
+      // return request
+      //   .then((res: any) => {
+      //     put(updateQueryResult(id, res, REQUEST_STATUS_SUCCESS))
+      //     put(successfulCypher(action.cmd))
+      //     return res
+      //   })
+      //   .catch((e: any) => {
+      //     const request = getRequest(store.getState(), id)
+      //     // Only update error statuses for pending queries
+      //     if (request.status !== REQUEST_STATUS_PENDING) {
+      //       return
+      //     }
+      //     put(updateQueryResult(id, e, REQUEST_STATUS_ERROR))
+      //     put(unsuccessfulCypher(action.cmd))
+      //     throw e
+      //   })
+      //   .finally(() => {
+      //     put(fetchMetaData())
+      //     finishRequestSpan?.finish()
+      //     transaction?.finish()
+      //   })
     }
   },
   {

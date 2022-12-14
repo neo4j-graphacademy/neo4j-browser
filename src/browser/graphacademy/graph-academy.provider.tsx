@@ -1,5 +1,5 @@
 import { Alert, Button } from '@neo4j-ndl/react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { GraphAcademyContext } from './graph-academy.context'
 import { Sandbox } from './types/sandbox'
 import { Driver } from 'neo4j-driver'
@@ -7,9 +7,25 @@ import { Driver } from 'neo4j-driver'
 import { GetSandboxCredentials } from './stages/1-get-credentials'
 import { WaitForSandboxIp } from './stages/2-wait-for-ip'
 import { VerifyConnectivity } from './stages/3-verify-connectivity'
+import {
+  ConnectionState,
+  selectConnection,
+  setActiveConnection,
+  updateConnection
+} from 'shared/modules/connections/connectionsDuck'
+import { CONNECTION_ID } from 'shared/modules/discovery/discoveryDuck'
+import { NATIVE } from 'services/bolt/boltHelpers'
+import { withBus } from 'react-suber'
+import { connect } from 'react-redux'
+import { GlobalState } from 'shared/globalState'
+import { setContent } from 'shared/modules/editor/editorDuck'
+import Loading from './loading'
 
 interface GraphAcademyProviderProps {
-  children: React.ReactNode | React.ReactNode[] | null
+  children: React.ReactElement
+  updateConnection: (sandbox: Sandbox) => void
+  connection: string | null
+  connectionState: ConnectionState
 }
 
 declare global {
@@ -23,12 +39,16 @@ declare global {
   }
 }
 
-export default function GraphAcademyProvider(
-  props: GraphAcademyProviderProps
-): JSX.Element {
+function GraphAcademyProvider(props: GraphAcademyProviderProps): JSX.Element {
   const [sandbox, setSandbox] = useState<Sandbox>()
   const [error, setError] = useState<string>()
   const [driver, setDriver] = useState<Driver>()
+
+  useEffect(() => {
+    if (sandbox && driver) {
+      props.updateConnection(sandbox)
+    }
+  }, [driver, sandbox])
 
   if (error) {
     return (
@@ -106,25 +126,6 @@ export default function GraphAcademyProvider(
 
   // 3. Connect and verify connectivity
   else if (!driver) {
-    window.localStorage.setItem(
-      'neo4j.connections',
-      JSON.stringify({
-        allConnectionIds: ['$$discovery'],
-        connectionsById: {
-          $$discovery: {
-            host: `${sandbox.scheme}://${sandbox.ip}:${sandbox.boltPort}`,
-            id: '$$discovery',
-            name: '$$discovery',
-            type: 'bolt',
-            username: sandbox.username,
-            password: sandbox.password
-          }
-        },
-        activeConnection: '$$discovery',
-        connectionState: 1
-      })
-    )
-
     return (
       <VerifyConnectivity
         sandbox={sandbox}
@@ -134,7 +135,12 @@ export default function GraphAcademyProvider(
     )
   }
 
-  // 4. Render application
+  // 4. Await active connection
+  else if (!props.connection) {
+    return <Loading message="Preparing connection" />
+  }
+
+  // 5. Render application
   return (
     <GraphAcademyContext.Provider value={{ sandbox, driver }}>
       {/* <LoadingWrapper> */}
@@ -146,3 +152,46 @@ export default function GraphAcademyProvider(
     </GraphAcademyContext.Provider>
   )
 }
+
+const mapStateToProps = (state: GlobalState) => {
+  return {
+    connectionState: state.connections.connectionState,
+    connection: state.connections.activeConnection
+  }
+}
+
+const mapDispatchToProps = (dispatch: any) => {
+  return {
+    updateConnection: (sandbox: Sandbox) => {
+      const { username, password, ip, boltPort } = sandbox as Sandbox
+
+      dispatch(
+        updateConnection({
+          id: CONNECTION_ID,
+          host: `bolt://${ip}:${boltPort}`,
+          username,
+          password,
+          authEnabled: true,
+          authenticationMethod: NATIVE
+        })
+      )
+
+      dispatch(setActiveConnection(CONNECTION_ID))
+
+      // @GraphAcademy - detect ?cmd=edit&arg={cypher}
+      const url = new URL(window.location.href)
+      const cmd = url.searchParams.get('cmd')
+      const arg = url.searchParams.get('arg')
+
+      if (cmd === 'edit' && arg && arg !== '') {
+        setTimeout(() => {
+          dispatch(setContent(arg))
+        }, 20)
+      }
+    }
+  }
+}
+
+export default withBus(
+  connect(mapStateToProps, mapDispatchToProps)(GraphAcademyProvider)
+)

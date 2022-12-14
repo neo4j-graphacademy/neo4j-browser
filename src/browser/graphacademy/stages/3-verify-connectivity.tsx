@@ -5,8 +5,8 @@ import Loading from '../loading'
 
 interface VerifyConnectivityProps {
   sandbox: Sandbox
-  setDriver: (driver: Driver) => void
   setError: (error: string) => void
+  setDriver: (driver: Driver) => void
 }
 
 export function VerifyConnectivity({

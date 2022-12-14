@@ -46,7 +46,7 @@ import {
   getDesktopTheme
 } from 'browser-components/desktop-api/desktop-api.handlers'
 import useDerivedTheme from 'browser-hooks/useDerivedTheme'
-import { CannyLoader } from 'browser-services/canny'
+// import { CannyLoader } from 'browser-services/canny'
 import * as themes from 'browser/styles/themes'
 import { version } from 'project-root/package.json'
 import { isRunningE2ETest } from 'services/utils'

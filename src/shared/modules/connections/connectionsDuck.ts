@@ -584,7 +584,8 @@ export const startupConnectEpic = (action$: any, store: any) => {
     })
 }
 
-export const startupConnectionSuccessEpic = (action$: any, store: any) => {
+// eslint-disable-next-line
+export const startupConnectionSuccessEpic = (action$: any, _store: any) => {
   return action$
     .ofType(STARTUP_CONNECTION_SUCCESS)
     .do(() => {
@@ -592,22 +593,8 @@ export const startupConnectionSuccessEpic = (action$: any, store: any) => {
       // if (getPlayImplicitInitCommands(store.getState())) {
       // store.dispatch(executeCommand(event.data.arg))
       // store.dispatch(executeSystemCommand(`:server status`))
-
       // store.dispatch(executeSystemCommand(getInitCmd(store.getState())))
       // }
-
-      // @GraphAcademy - detect ?cmd=edit&arg={cypher}
-      const url = new URL(window.location.href)
-      const cmd = url.searchParams.get('cmd')
-      const arg = url.searchParams.get('arg')
-
-      console.log({ cmd, arg })
-
-      if (cmd === 'edit' && arg && arg !== '') {
-        console.log('spatch')
-
-        store.dispatch(editContent('init', cmd))
-      }
     })
     .ignoreElements()
 }
@@ -656,9 +643,8 @@ export const silentDisconnectEpic = (action$: any, store: any) => {
     .mapTo(setActiveConnection(null, true))
 }
 export const disconnectSuccessEpic = (action$: any) => {
-  return action$
-    .ofType(DISCONNECTION_SUCCESS)
-    .mapTo(executeSystemCommand(':server connect'))
+  return action$.ofType(DISCONNECTION_SUCCESS)
+  // .mapTo(executeSystemCommand(':server connect'))
 }
 
 export const connectionLostEpic = (action$: any, store: any) =>
